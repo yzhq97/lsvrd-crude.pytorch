@@ -67,15 +67,15 @@ if __name__ == "__main__":
                     inst_cnt[inst["name"]] += 1
                 else:
                     inst_cnt[inst["name"]] = 1
-                preds = inst["relations"]
+                rels = inst["relations"]
 
-                for pred_id, pred in preds.items():
-                    if pred["name"] in glove_words:
-                        pred_dict.add_sym(pred["name"])
-                    if pred["name"] in pred_cnt:
-                        pred_cnt[pred["name"]] += 1
+                for rel_id, rel in rels:
+                    if rel["name"] in glove_words:
+                        pred_dict.add_sym(rel["name"])
+                    if rel["name"] in pred_cnt:
+                        pred_cnt[rel["name"]] += 1
                     else:
-                        pred_cnt[pred["name"]] = 1
+                        pred_cnt[rel["name"]] = 1
 
     inst_dict.dump_to_file("data/gqa/inst_dict.json")
     pred_dict.dump_to_file("data/gqa/pred_dict.json")
