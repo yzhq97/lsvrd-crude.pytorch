@@ -77,13 +77,19 @@ if __name__ == "__main__":
 
     print("adding symbols ...")
 
+    unused_insts = []
     for inst_name, cnt in tqdm(inst_cnt.items()):
         if inst_name in glove_words:
             inst_dict.add_sym(inst_name)
+        else:
+            unused_insts.append(inst_name)
 
+    unused_preds = []
     for pred_name, cnt in tqdm(pred_cnt.items()):
         if pred_name in glove_words:
             inst_dict.add_sym(pred_name)
+        else:
+            unused_preds.append(pred_name)
 
     inst_dict.dump_to_file("data/gqa/inst_dict.json")
     pred_dict.dump_to_file("data/gqa/pred_dict.json")
@@ -96,4 +102,11 @@ if __name__ == "__main__":
 
     print("%d instance categories, %d initialized" % (len(inst_cnt), len(inst_dict)))
     print("%d predicates, %d initialized" % (len(pred_cnt), len(pred_dict)))
+    print()
 
+    print("unused insts:")
+    print(unused_insts)
+    print()
+
+    print("unused preds:")
+    print(unused_preds)
