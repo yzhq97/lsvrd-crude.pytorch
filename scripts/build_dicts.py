@@ -12,7 +12,7 @@ def create_glove_emb(sym_dict, glove_txt_path, emb_dim):
             elems = line.split(' ')
             word = elems[0]
             if word in sym_dict:
-                idx = sym_dict.word2idx[word]
+                idx = sym_dict.sym2idx[word]
                 vec = [float(_) for _ in elems[1:]]
                 w_emb[idx] = vec
     return w_emb
