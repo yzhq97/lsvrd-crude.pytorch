@@ -61,21 +61,29 @@ if __name__ == "__main__":
 
             for inst_id, inst in instances.items():
 
-                if inst["name"] in glove_words:
-                    inst_dict.add_sym(inst["name"])
                 if inst["name"] in inst_cnt:
                     inst_cnt[inst["name"]] += 1
                 else:
                     inst_cnt[inst["name"]] = 1
+
                 rels = inst["relations"]
 
                 for rel in rels:
-                    if rel["name"] in glove_words:
-                        pred_dict.add_sym(rel["name"])
+
                     if rel["name"] in pred_cnt:
                         pred_cnt[rel["name"]] += 1
                     else:
                         pred_cnt[rel["name"]] = 1
+
+    print("adding symbols ...")
+
+    for inst_name, cnt in tqdm(inst_cnt.items()):
+        if inst_name in glove_words:
+            inst_dict.add_sym(inst_name)
+
+    for pred_name, cnt in tqdm(pred_cnt.items()):
+        if pred_name in glove_words:
+            inst_dict.add_sym(pred_name)
 
     inst_dict.dump_to_file("data/gqa/inst_dict.json")
     pred_dict.dump_to_file("data/gqa/pred_dict.json")
