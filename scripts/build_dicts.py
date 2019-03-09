@@ -69,7 +69,7 @@ if __name__ == "__main__":
                     inst_cnt[inst["name"]] = 1
                 rels = inst["relations"]
 
-                for rel_id, rel in rels:
+                for rel in rels:
                     if rel["name"] in glove_words:
                         pred_dict.add_sym(rel["name"])
                     if rel["name"] in pred_cnt:
