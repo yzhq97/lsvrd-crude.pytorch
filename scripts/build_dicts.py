@@ -17,6 +17,12 @@ def create_glove_emb(sym_dict, glove_txt_path, emb_dim):
                 w_emb[idx] = vec
     return w_emb
 
+def get_uninit(sym_dict, glove_words):
+    uninit = []
+    for word in sym_dict.sym2idx.keys():
+        if word not in glove_words:
+            uninit.append(word)
+    return uninit
 
 scence_graphs_dir = "data/gqa/scene_graphs"
 glove_txt_path = "data/glove/glove.6B.300d.txt"
@@ -77,19 +83,15 @@ if __name__ == "__main__":
 
     print("adding symbols ...")
 
-    unused_insts = []
-    for inst_name, cnt in tqdm(inst_cnt.items()):
-        if inst_name in glove_words:
-            inst_dict.add_sym(inst_name)
-        else:
-            unused_insts.append(inst_name)
 
-    unused_preds = []
+    for inst_name, cnt in tqdm(inst_cnt.items()):
+        inst_dict.tokenize(inst_name, add_sym=True)
+
     for pred_name, cnt in tqdm(pred_cnt.items()):
-        if pred_name in glove_words:
-            inst_dict.add_sym(pred_name)
-        else:
-            unused_preds.append(pred_name)
+        pred_dict.tokenize(pred_name, add_sym=True)
+
+    uninit_insts = get_uninit(inst_dict, glove_words)
+    uninit_preds = get_uninit(pred_dict, glove_words)
 
     inst_dict.dump_to_file("data/gqa/inst_dict.json")
     pred_dict.dump_to_file("data/gqa/pred_dict.json")
@@ -100,13 +102,13 @@ if __name__ == "__main__":
     pred_emb = create_glove_emb(pred_dict, glove_txt_path, 300)
     np.save("data/gqa/pred_emb.npy", pred_emb)
 
-    print("%d instance categories, %d initialized" % (len(inst_cnt), len(inst_dict)))
-    print("%d predicates, %d initialized" % (len(pred_cnt), len(pred_dict)))
+    print("%d instance words, %d initialized" % (len(inst_cnt), len(inst_dict)))
+    print("%d predicate words, %d initialized" % (len(pred_cnt), len(pred_dict)))
     print()
 
-    print("unused insts:")
-    print(unused_insts)
+    print("uninit inst words:")
+    print(uninit_insts)
     print()
 
-    print("unused preds:")
-    print(unused_preds)
+    print("uninit pred words:")
+    print(uninit_preds)
