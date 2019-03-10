@@ -46,12 +46,9 @@ if __name__ == "__main__":
     # get dictionary
 
     inst_dict = SymbolDictionary()
-    inst_dict.add_sym("unknown")
     inst_cnt = {}
 
     pred_dict = SymbolDictionary()
-    pred_dict.add_sym("none")
-    pred_dict.add_sym("is")
     pred_cnt = {}
 
     print("running statistics ...")
