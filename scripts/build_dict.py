@@ -73,7 +73,7 @@ if __name__ == "__main__":
         tokens = word_dict.tokenize(pred_name, add_sym=True)
         len_cnt[len(tokens)] += 1
 
-    word_dict.dump_to_file("data/gqa/word_dict.json")
+    word_dict.dump_to_file("data/gqa/vrd/word_dict.json")
 
     # get glove words
     print("parsing glove words")
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     print("saving word embeddings...")
     word_emb, uninit = create_glove_emb(word_dict, glove_words, glove_emb)
-    np.save("data/gqa/word_emb_init.npy", word_emb)
+    np.save("data/gqa/vrd/word_emb_init.npy", word_emb)
 
     print("%d words in word_dict" % len(word_dict))
     print("uninitialized words (replaced with the embedding of 'unknown'):")
