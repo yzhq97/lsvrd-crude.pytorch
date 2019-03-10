@@ -32,9 +32,16 @@ if __name__ == "__main__":
     # get dictionary
 
     word_dict = SymbolDictionary()
+    len_cnt = [0] * 10
+
+    ent_dict = SymbolDictionary()
+    pred_dict = SymbolDictionary()
+    ent_dict.add_sym("unknown")
+    pred_dict.add_sym("none")
+    pred_dict.add_sym("is")
     ent_cnt = {}
     pred_cnt = {}
-    len_cnt = [ 0 ] * 10
+
     print("running statistics ...")
 
     for file in tqdm(files):
@@ -66,14 +73,18 @@ if __name__ == "__main__":
 
 
     for ent_name, cnt in tqdm(ent_cnt.items()):
+        ent_dict.add_sym(ent_name)
         tokens = word_dict.tokenize(ent_name, add_sym=True)
         len_cnt[len(tokens)] += 1
 
     for pred_name, cnt in tqdm(pred_cnt.items()):
+        pred_dict.add_sym(pred_name)
         tokens = word_dict.tokenize(pred_name, add_sym=True)
         len_cnt[len(tokens)] += 1
 
     word_dict.dump_to_file("data/gqa/vrd/word_dict.json")
+    ent_dict.dump_to_file("data/gqa/vrd/ent_dict.json")
+    pred_dict.dump_to_file("data/gqa/vrd/pred_dict.json")
 
     # get glove words
     print("parsing glove words")
@@ -96,6 +107,10 @@ if __name__ == "__main__":
     word_emb, uninit = create_glove_emb(word_dict, glove_words, glove_emb)
     np.save("data/gqa/vrd/word_emb_init.npy", word_emb)
 
+    print()
+    print("%d entity categories, %d predicates" % (len(ent_dict), len(pred_dict)))
+
+    print()
     print("%d words in word_dict" % len(word_dict))
     print("uninitialized words (replaced with the embedding of 'unknown'):")
     print(uninit)

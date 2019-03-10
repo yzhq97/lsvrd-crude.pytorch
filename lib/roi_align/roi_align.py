@@ -17,7 +17,7 @@ class RoIAlign(nn.Module):
     def forward(self, featuremap, boxes, box_ind):
         """
         RoIAlign based on crop_and_resize.
-        See more details on https://github.com/ppwwyyxx/tensorpack/blob/6d5ba6a970710eaaa14b89d24aace179eb8ee1af/examples/FasterRCNN/model.py#L301
+        See more details on https://github.com/ppwwyyxx/tensorpack/blob/6d5ba6a970710eaaa14b89d24aace179eb8ee1af/examples/FasterRCNN/module.py#L301
         :param featuremap: NxCxHxW
         :param boxes: Mx4 float box with (x1, y1, x2, y2) **without normalization**
         :param box_ind: M
