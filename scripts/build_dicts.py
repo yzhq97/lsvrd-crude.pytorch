@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # get dictionary
 
     word_dict = SymbolDictionary()
-    len_cnt = [0] * 10
+    len_cnt = [0] * 8
 
     ent_dict = SymbolDictionary()
     pred_dict = SymbolDictionary()
