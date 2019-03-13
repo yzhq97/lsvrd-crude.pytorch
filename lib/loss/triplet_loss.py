@@ -5,32 +5,28 @@ class TripletLoss(nn.Module):
 
     def __init__(self, n_neg, margin):
         """
+        computes L_y as in paper
         :param n_neg: number of negative samples per positive sample
         """
         super(TripletLoss, self).__init__()
+        assert n_neg > 0
+
         self.n_neg = n_neg
         self.margin = margin
 
-    def forward(self, s, px, pxy):
+    def forward(self, s):
         """
-        :param s: [B, Nx, Ny] pairwise similarity matrix
-
-        :param px: [B, Nx]
-        px(i)=1 means xi is a postive sample
-        px(i)=0 means xi is a negative sample
-
-        :param pxy: [B, Nx, Ny] positivity matrix.
-        pxy(i, j)=1 means that (xi, yj) is a postive pair
-        pxy(i, j)=0 means that (xi, yj) is a negative pair
+        :param s: [N, N] pairwise similarity matrix
+        s[i, j] = s(xi, yj)
         """
+        N1, N2 = s.size()
+        assert N1 == N2
 
-        B, Nx, Ny = s.size()
+        s_negs = s[1-torch.eye(N1)]
 
-        pos_indices = torch.nonzero(px) # [ Nx_pos, 2 ]
-        s_pos = s[pos_indices] # [ Nx_pos, Ny ]
+        return loss
 
-        pxy_neg = 1 - pxy # mark negative pairs with ones
-        pxy_x_pos = pxy_neg[pos_indices] # [ Nx_pos, Ny ]
+
 
 
 

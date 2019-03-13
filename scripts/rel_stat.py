@@ -43,47 +43,16 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 
     return rel_mat
 
-def compute_iou_mat(b1, b2):
-
-    x11, y11, x12, y12 = np.split(b1, 4, axis=1)
-    x21, y21, x22, y22 = np.split(b2, 4, axis=1)
-    xA = np.maximum(x11, np.transpose(x21))
-    yA = np.maximum(y11, np.transpose(y21))
-    xB = np.minimum(x12, np.transpose(x22))
-    yB = np.minimum(y12, np.transpose(y22))
-    intersection = np.maximum((xB - xA), 0) * np.maximum((yB - yA), 0)
-    b1_area = (x12 - x11) * (y12 - y11)
-    b2_area = (x22 - x21) * (y22 - y21)
-    union = b1_area + np.transpose(b2_area) - intersection
-    iou = intersection / union
-    return iou
-
-def get_roidb_from_proposals(proposals, gt_boxes, ent_labels, rel_mat, threshold = 0.5):
-
-    iou_mat = compute_iou_mat(proposals, gt_boxes)
-    max_idx = np.argmax(iou_mat, axis=1)
-    max_iou = iou_mat[ np.arange(len(max_idx)), max_idx ]
-
-    pos_proposals = np.where(max_iou >= threshold)[0]
-    n_pos_props = len(pos_proposals)
-    pos2gt = max_idx[pos_proposals]
-
-    neg_proposals = np.where(max_iou < threshold)[0]
-
-    # TODO: compare from proposal and from gt
-
-    raise NotImplementedError
-
-def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat):
-    pass
-
 if __name__ == "__main__":
+
+    n_pred_use = 40
+    n_rel_max = 50000
 
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
     pred_dict_path = "data/gqa/vrd/pred_dict.json"
 
     scene_graphs_dir = "data/gqa/scene_graphs"
-    scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs" ]
+    scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs.json" ]
 
     object_features_dir = "data/gqa/objects"
     n_h5s = 15
@@ -94,10 +63,7 @@ if __name__ == "__main__":
     ent_dict = SymbolDictionary.load_from_file(ent_dict_path)
     pred_dict = SymbolDictionary.load_from_file(pred_dict_path)
 
-    # load h5s
-    h5_paths = [ os.path.join(object_features_dir, "gqa_objects_%d.h5" % i) for i in range(n_h5s)]
-    h5_boxes = [ h5py.File(path, "r").get("bboxes") for path in h5_paths ]
-    h5_lookup = json.load(open(os.path.join(object_features_dir, "gqa_objects_info.json")))
+    rel_cnt = [ 0 ] * len(pred_dict)
 
     # start
     for sg_file in tqdm(scene_graph_files):
@@ -109,8 +75,37 @@ if __name__ == "__main__":
 
             ent_labels, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict)
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
-            h5_index = h5_lookup[image_id]
-            proposals = h5_boxes[h5_index["file"]][h5_index["idx"], :h5_index["objectsNum"], :]
 
-            # TODO: generate ROIDB
+            n_ent = len(idx2eid)
+            for i in range(n_ent):
+                for j in range(n_ent):
+                    if i != j:
+                        if len(rel_mat[i][j]) == 0:
+                            rel_cnt[0] += 1
+                        else:
+                            for pred_id in rel_mat[i][j]:
+                                rel_cnt[pred_id] += 1
 
+    pred_ids = [ _ for _ in range(len(pred_dict)) ]
+    rel_sum = sum(rel_cnt) - rel_cnt[0]
+    rel_portion = [ 1.0 * n / rel_sum for n in rel_cnt ]
+    rel_use =  [ n if n <= n_rel_max else n_rel_max for n in rel_cnt ]
+    rel_prob = [ 1.0*rel_use[i]/rel_cnt[i] for i in range(len(pred_dict)) ]
+    rel_cnt = zip(pred_ids, rel_cnt, rel_portion, rel_use, rel_prob)
+    rel_cnt = sorted(rel_cnt, key=lambda x: x[1], reverse=True)
+
+    for i in range(len(pred_dict)):
+        pred_id, cnt, portion, rel_use, rel_prob = rel_cnt[i]
+        print("%3d | %3d %20s %10d %.4f" % (i+1, pred_id, pred_dict.idx2sym[pred_id], cnt, 100 * portion))
+
+    pred_dict_use = SymbolDictionary()
+    pred_use_prob = []
+    for i in range(1, n_pred_use+1):
+        pred_id, cnt, portion, rel_use, rel_prob = rel_cnt[i]
+        pred_name = pred_dict.idx2sym[pred_id]
+        pred_dict_use.add_sym(pred_name)
+        pred_use_prob.append(rel_prob)
+    pred_dict_use.dump_to_file("data/gqa/vrd/pred_dict_%d.json" % n_pred_use)
+
+    with open("data/gqa/vrd/pred_use_prob.json", "w") as f:
+        json.dump(pred_use_prob, f)
