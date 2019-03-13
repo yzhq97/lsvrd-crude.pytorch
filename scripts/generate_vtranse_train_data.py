@@ -64,18 +64,42 @@ def get_roidb_from_proposals(proposals, gt_boxes, ent_labels, rel_mat, threshold
     max_idx = np.argmax(iou_mat, axis=1)
     max_iou = iou_mat[ np.arange(len(max_idx)), max_idx ]
 
-    pos_proposals = np.where(max_iou >= threshold)[0]
+    pos_proposals = np.where(max_iou >= threshold)
     n_pos_props = len(pos_proposals)
     pos2gt = max_idx[pos_proposals]
 
-    neg_proposals = np.where(max_iou < threshold)[0]
+    sbj_boxes = []
+    obj_boxes = []
+    rlp_labels = []
 
-    # TODO: compare from proposal and from gt
+    for i in range(n_pos_props):
+        for j in range(n_pos_props):
+            if i != j and pos2gt[i] != pos2gt[j]:
+                sbj_gt = pos2gt[i]
+                obj_gt = pos2gt[j]
+                for pred_id in rel_mat[sbj_gt][obj_gt]:
+                    sbj_boxes.append(proposals[i])
+                    obj_boxes.append(proposals[j])
+                    rlp_labels.append([ ent_labels[sbj_gt], pred_id, ent_labels[obj_gt] ])
 
-    raise NotImplementedError
+    return sbj_boxes, obj_boxes, rlp_labels
 
 def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat):
-    pass
+
+    sbj_boxes = []
+    obj_boxes = []
+    rlp_labels = []
+
+    n_ent = len(ent_labels)
+    for i in range(n_ent):
+        for j in range(n_ent):
+            if i != j:
+                for pred_id in rel_mat[i][j]:
+                    sbj_boxes.append(gt_boxes[i])
+                    obj_boxes.append(gt_boxes[j])
+                    rlp_labels.append([ ent_labels[i], pred_id, ent_labels[j] ])
+
+    return sbj_boxes, obj_boxes, rlp_labels
 
 if __name__ == "__main__":
 
@@ -89,6 +113,8 @@ if __name__ == "__main__":
     n_h5s = 15
 
     out_dir = "data/gqa/vrd/vtranse"
+
+    box_source = "proposal"
 
     # load dictionaries
     ent_dict = SymbolDictionary.load_from_file(ent_dict_path)
@@ -109,8 +135,15 @@ if __name__ == "__main__":
 
             ent_labels, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict)
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
-            h5_index = h5_lookup[image_id]
-            proposals = h5_boxes[h5_index["file"]][h5_index["idx"], :h5_index["objectsNum"], :]
 
-            # TODO: generate ROIDB
+            if box_source == "gt":
+                sbj_boxes, obj_boxes, rlp_labels = get_roidb_from_gt(ent_boxes, ent_labels, rel_mat)
+            elif box_source == "proposal":
+                h5_index = h5_lookup[image_id]
+                proposals = h5_boxes[h5_index["file"]][h5_index["idx"], :h5_index["objectsNum"], :]
+                sbj_boxes, obj_boxes, rlp_labels = get_roidb_from_proposals(proposals, ent_boxes, ent_labels, rel_mat)
+
+
+            # TODO: bbox representation. How does VTransE want it ???
+            # TODO: rlp_labels: What is the correct order ???
 
