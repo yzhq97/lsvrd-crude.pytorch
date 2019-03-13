@@ -19,15 +19,15 @@ def create_glove_emb(sym_dict, glove_words, glove_emb):
 
     return w_emb, uninit
 
-scence_graphs_dir = "data/gqa/scene_graphs"
-glove_txt_path = "data/glove/glove.6B.300d.txt"
-emb_dim = 300
-files = [
-    "train_sceneGraphs.json",
-    "val_sceneGraphs.json"
-]
-
 if __name__ == "__main__":
+
+    scence_graphs_dir = "data/gqa/scene_graphs"
+    glove_txt_path = "data/glove/glove.6B.300d.txt"
+    emb_dim = 300
+    files = [
+        "train_sceneGraphs.json",
+        "val_sceneGraphs.json"
+    ]
 
     # get dictionary
 
@@ -38,7 +38,6 @@ if __name__ == "__main__":
     pred_dict = SymbolDictionary()
     ent_dict.add_sym("unknown")
     pred_dict.add_sym("none")
-    pred_dict.add_sym("is")
     ent_cnt = {}
     pred_cnt = {}
 
@@ -51,9 +50,9 @@ if __name__ == "__main__":
 
         for image_id, scene_graph in tqdm(scene_graphs.items()):
 
-            entances = scene_graph["objects"]
+            entities = scene_graph["objects"]
 
-            for ent_id, ent in entances.items():
+            for ent_id, ent in entities.items():
 
                 if ent["name"] in ent_cnt:
                     ent_cnt[ent["name"]] += 1
