@@ -39,6 +39,7 @@ class RelationNet (nn.Module):
         x = torch.cat([sbj_inter, x, obj_inter], dim=1)
         x = self.layers_2(x)
         x = torch.cat([sbj_emb, x, obj_emb], dim=1)
+        x = self.layers_3(x)
 
         return x
 

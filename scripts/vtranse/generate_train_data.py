@@ -201,8 +201,6 @@ if __name__ == "__main__":
             else:
                 raise Exception("invalid box source")
 
-            # TODO: bbox representation. How does VTransE want it ??? assuming (x1, y1, x2, y2)
-
             assert len(sbj_boxes) == len(obj_boxes)
             assert len(sbj_boxes) == len(rlp_labels)
             if len(sbj_boxes) == 0: continue
