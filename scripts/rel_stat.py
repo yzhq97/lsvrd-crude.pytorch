@@ -64,6 +64,7 @@ if __name__ == "__main__":
     pred_dict = SymbolDictionary.load_from_file(pred_dict_path)
 
     rel_cnt = [ 0 ] * len(pred_dict)
+    ent_cnt = [ 0 ] * len(ent_dict)
 
     # start
     for sg_file in tqdm(scene_graph_files):
@@ -75,6 +76,9 @@ if __name__ == "__main__":
 
             ent_labels, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict)
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
+
+            for label in ent_labels:
+                ent_cnt[label] += 1
 
             n_ent = len(idx2eid)
             for i in range(n_ent):

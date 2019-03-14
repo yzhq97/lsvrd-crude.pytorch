@@ -143,7 +143,7 @@ if __name__ == "__main__":
     n_each_pred = 30
 
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
-    pred_dict_path = "data/gqa/vrd/pred_dict.json"
+    pred_dict_path = "data/gqa/vrd/pred_dict_40.json"
 
     scene_graphs_dir = "data/gqa/scene_graphs"
     scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs.json" ]
