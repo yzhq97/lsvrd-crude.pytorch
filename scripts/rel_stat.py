@@ -45,7 +45,7 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 
 if __name__ == "__main__":
 
-    n_pred_use = 40
+    n_pred_use = 20
     n_rel_max = 50000
 
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
@@ -64,7 +64,6 @@ if __name__ == "__main__":
     pred_dict = SymbolDictionary.load_from_file(pred_dict_path)
 
     rel_cnt = [ 0 ] * len(pred_dict)
-    ent_cnt = [ 0 ] * len(ent_dict)
 
     # start
     for sg_file in tqdm(scene_graph_files):
@@ -76,9 +75,6 @@ if __name__ == "__main__":
 
             ent_labels, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict)
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
-
-            for label in ent_labels:
-                ent_cnt[label] += 1
 
             n_ent = len(idx2eid)
             for i in range(n_ent):
@@ -98,6 +94,7 @@ if __name__ == "__main__":
     rel_cnt = zip(pred_ids, rel_cnt, rel_portion, rel_use, rel_prob)
     rel_cnt = sorted(rel_cnt, key=lambda x: x[1], reverse=True)
 
+    print("predicate stats:")
     for i in range(len(pred_dict)):
         pred_id, cnt, portion, rel_use, rel_prob = rel_cnt[i]
         print("%3d | %3d %20s %10d %.4f" % (i+1, pred_id, pred_dict.idx2sym[pred_id], cnt, 100 * portion))
@@ -110,6 +107,5 @@ if __name__ == "__main__":
         pred_dict_use.add_sym(pred_name)
         pred_use_prob.append(rel_prob)
     pred_dict_use.dump_to_file("data/gqa/vrd/pred_dict_%d.json" % n_pred_use)
-
-    with open("data/gqa/vrd/pred_use_prob.json", "w") as f:
+    with open("data/gqa/vrd/pred_use_prob_%d.json" % n_pred_use, "w") as f:
         json.dump(pred_use_prob, f)
