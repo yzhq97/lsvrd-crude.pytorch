@@ -45,7 +45,7 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 
 if __name__ == "__main__":
 
-    n_pred_use = 20
+    n_pred_use = 100
     n_rel_max = 50000
 
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
