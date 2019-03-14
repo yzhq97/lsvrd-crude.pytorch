@@ -78,6 +78,8 @@ if __name__ == "__main__":
             ent_labels, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict)
             n_boxes[roidb_key] += len(ent_labels)
 
+            if len(ent_boxes) == 0: continue
+
             entry = {
                 "image": os.path.join(image_dir, "%s.jpg" % image_id),
                 "width": meta["width"],
@@ -91,8 +93,10 @@ if __name__ == "__main__":
             entries.append(entry)
 
         if roidb_key == "train_roidb":
-            for entry in entries:
-                entries.append(get_flipped_entry(entry))
+            flipped_entries = []
+            for entry in tqdm(entries):
+                flipped_entries.append(get_flipped_entry(entry))
+            entries.extend(flipped_entries)
 
         roidb[roidb_key] = entries
 
