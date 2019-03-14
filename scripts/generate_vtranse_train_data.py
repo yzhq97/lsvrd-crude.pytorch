@@ -82,6 +82,10 @@ def get_roidb_from_proposals(proposals, gt_boxes, ent_labels, rel_mat, threshold
                     obj_boxes.append(proposals[j])
                     rlp_labels.append([ ent_labels[sbj_gt], pred_id, ent_labels[obj_gt] ])
 
+    sbj_boxes = np.concatenate(sbj_boxes, axis=0)
+    obj_boxes = np.concatenate(obj_boxes, axis=0)
+    rlp_labels = np.array(rlp_labels, dtype="int32")
+
     return sbj_boxes, obj_boxes, rlp_labels
 
 def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat):
@@ -99,22 +103,53 @@ def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat):
                     obj_boxes.append(gt_boxes[j])
                     rlp_labels.append([ ent_labels[i], pred_id, ent_labels[j] ])
 
+    sbj_boxes = np.array(sbj_boxes, dtype="float32")
+    obj_boxes = np.array(obj_boxes, dtype="float32")
+    rlp_labels = np.array(rlp_labels, dtype="int32")
+
     return sbj_boxes, obj_boxes, rlp_labels
 
+def generate_batch_bal(labels, N_each):
+    N_total = len(labels)
+    num_batch = np.int32(N_total/N_each)
+    if N_total%N_each == 0:
+        index_box = range(N_total)
+    else:
+        index_box = np.empty(shape=[N_each*(num_batch+1)],dtype=np.int32)
+        index_box[0:N_total] = range(N_total)
+        N_rest = N_each*(num_batch+1) - N_total
+
+        unique_labels = np.unique(labels, axis = 0)
+        N_unique = len(unique_labels)
+        num_label = np.zeros([N_unique,])
+        for ii in range(N_unique):
+            num_label[ii]=np.sum(labels == unique_labels[ii])
+        prob_label = np.sum(num_label)/num_label
+        prob_label = prob_label/np.sum(prob_label)
+        index_rest = np.random.choice(N_unique, size=[N_rest,], p=prob_label)
+        for ii in range(N_rest):
+            ind = index_rest[ii]
+            ind2 = np.where(labels == unique_labels[ind])[0]
+            a = np.random.randint(len(ind2))
+            index_box[N_total+ii] = ind2[a]
+    return index_box
+
 if __name__ == "__main__":
+
+    vtranse_image_dir = "dataset/gqa/images"
+    box_source = "gt"
+    out_path = "data/gqa/vrd/vtranse/input/gqa_%s_roidb.npz" % box_source
+    roidb_keys = ["train_roidb", "test_roidb"]
+    n_each_pred = 30
 
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
     pred_dict_path = "data/gqa/vrd/pred_dict.json"
 
     scene_graphs_dir = "data/gqa/scene_graphs"
-    scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs" ]
+    scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs.json" ]
 
     object_features_dir = "data/gqa/objects"
     n_h5s = 15
-
-    out_dir = "data/gqa/vrd/vtranse"
-
-    box_source = "proposal"
 
     # load dictionaries
     ent_dict = SymbolDictionary.load_from_file(ent_dict_path)
@@ -126,24 +161,54 @@ if __name__ == "__main__":
     h5_lookup = json.load(open(os.path.join(object_features_dir, "gqa_objects_info.json")))
 
     # start
-    for sg_file in tqdm(scene_graph_files):
 
+    roidb = {}
+    n_triplets = {}
+
+    for roidb_key, sg_file in tqdm(zip(roidb_keys, scene_graph_files)):
+
+        entries = []
         sg_path = os.path.join(scene_graphs_dir, sg_file)
         scene_graphs = json.load(open(sg_path))
+        n_triplets[roidb_key] = 0
 
         for image_id, scene_graph in tqdm(scene_graphs.items()):
 
+            meta = h5_lookup[image_id]
             ent_labels, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict)
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
 
             if box_source == "gt":
                 sbj_boxes, obj_boxes, rlp_labels = get_roidb_from_gt(ent_boxes, ent_labels, rel_mat)
             elif box_source == "proposal":
-                h5_index = h5_lookup[image_id]
-                proposals = h5_boxes[h5_index["file"]][h5_index["idx"], :h5_index["objectsNum"], :]
+                proposals = h5_boxes[meta["file"]][meta["idx"], :meta["objectsNum"], :]
                 sbj_boxes, obj_boxes, rlp_labels = get_roidb_from_proposals(proposals, ent_boxes, ent_labels, rel_mat)
+            else:
+                raise Exception("invalid box source")
 
+            # TODO: bbox representation. How does VTransE want it ??? assuming (x1, y1, x2, y2)
 
-            # TODO: bbox representation. How does VTransE want it ???
-            # TODO: rlp_labels: What is the correct order ???
+            assert len(sbj_boxes) == len(obj_boxes)
+            assert len(sbj_boxes) == len(rlp_labels)
+            if len(sbj_boxes) == 0: continue
+            n_triplets[roidb_key] += len(sbj_boxes)
 
+            entry = {
+                "image": os.path.join(vtranse_image_dir, "%s.jpg" % image_id),
+                "width": meta["width"],
+                "height": meta["height"],
+                "sub_box_gt": sbj_boxes,
+                "obj_box_gt": obj_boxes,
+                "sub_gt": rlp_labels[:, 0],
+                "obj_gt": rlp_labels[:, 2],
+                "rela_gt": rlp_labels[:, 1],
+                "index_pred": generate_batch_bal(rlp_labels, n_each_pred)
+            }
+
+            entries.append(entry)
+
+        roidb[roidb_key] = entries
+
+    np.savez(out_path, roidb=roidb)
+
+    print(n_triplets)
