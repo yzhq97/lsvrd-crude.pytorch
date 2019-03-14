@@ -27,7 +27,7 @@ def get_entities(scene_graph, ent_dict: SymbolDictionary):
 
 if __name__ == "__main__":
 
-    n_ent_use = 400
+    n_ent_use = 201
 
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
     pred_dict_path = "data/gqa/vrd/pred_dict.json"

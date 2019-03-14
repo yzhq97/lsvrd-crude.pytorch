@@ -145,14 +145,14 @@ def generate_batch_bal(labels, N_each):
 
 if __name__ == "__main__":
 
-    vtranse_image_dir = "dataset/gqa/images"
+    image_dir = "/data1/yjgroup/yzq/data/gqa11/images"
     box_source = "gt"
     roidb_keys = ["train_roidb", "test_roidb"]
     n_each_pred = 30
 
-    ent_dict_path = "data/gqa/vrd/ent_dict_400.json"
-    pred_dict_path = "data/gqa/vrd/pred_dict_20.json"
-    pred_use_prob_path = "data/gqa/vrd/pred_use_prob_20.json"
+    ent_dict_path = "data/gqa/vrd/ent_dict_201.json"
+    pred_dict_path = "data/gqa/vrd/pred_dict_100.json"
+    pred_use_prob_path = "data/gqa/vrd/pred_use_prob_100.json"
 
     scene_graphs_dir = "data/gqa/scene_graphs"
     scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs.json" ]
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             n_triplets[roidb_key] += len(sbj_boxes)
 
             entry = {
-                "image": os.path.join(vtranse_image_dir, "%s.jpg" % image_id),
+                "image": os.path.join(image_dir, "%s.jpg" % image_id),
                 "width": meta["width"],
                 "height": meta["height"],
                 "sub_box_gt": sbj_boxes,
