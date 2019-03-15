@@ -4,7 +4,6 @@ import h5py
 import math
 import numpy as np
 from tqdm import tqdm, trange
-from lib.data.utils import digitize_dict_keys
 
 
 class H5DataLoader:
@@ -24,7 +23,7 @@ class H5DataLoader:
         self.fields = [ self.get_field_info(info, field["name"]) for field in fields ]
         for i, field in enumerate(fields): self.fields[i]["preload"] = field["preload"]
         self.ids = info["splits"][split_name]
-        indices = digitize_dict_keys(info["indices"])
+        indices = info["indices"]
         self.indices = { key: (val["block"], val["idx"]) for key, val in indices.items() }
 
         self.data = []
