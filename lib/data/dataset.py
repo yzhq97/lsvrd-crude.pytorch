@@ -22,9 +22,13 @@ def get_pos_mat(labels):
     return pos_mat
 
 def box_union(box_a, box_b):
-    xa1, ya1, xa2, ya2 = box_a
-    xb1, yb1, xb2, yb2 = box_b
-    return (min(xa1, xb1), min(ya1, yb1), max(xa2, xb2), max(ya2, yb2))
+    ya1, xa1, ya2, xa2 = box_a
+    yb1, xb1, yb2, xb2 = box_b
+    return min(ya1, yb1), min(xa1, xb1), max(ya2, yb2), max(xa2, xb2)
+
+def box_convert_and_normalize(box, width, height):
+    x1, y1, x2, y2 = box
+    return y1/height, x1/width, y2/height, x2/width
 
 class GQATriplesDataset(Dataset):
 
@@ -62,15 +66,13 @@ class GQATriplesDataset(Dataset):
 
         entry = self.entries[idx]
         image_id = entry.image_id
-        image_size = (entry.width, entry.height)
 
         if self.preload: image = self.images[idx]
         else: image = self.preprocess_image(self.load_image(image_id))
 
         ret = (
-            image_id, image, torch.tensor(image_size),
+            image_id, image,
             torch.tensor(entry.sbj_box), torch.tensor(entry.obj_box), torch.tensor(entry.pred_box),
-            entry.sbj_label, entry.obj_label, entry.pred_label,
             torch.tensor(entry.sbj_tokens), torch.tensor(entry.obj_tokens), torch.tensor(entry.pred_tokens)
         )
 
@@ -84,6 +86,7 @@ class GQATriplesDataset(Dataset):
         return image
 
     def tokenize(self, text):
+
         tokens = self.word_dict.tokenize(text)[:self.tokens_length]
         tokens = tokens + [ 0 ] * (self.tokens_length - len(tokens))
         return tokens
@@ -120,14 +123,24 @@ class GQATriplesDataset(Dataset):
         new_entries = []
 
         for entry in tqdm(entries):
+
             entry = edict(entry)
+
+            # tokenize text
             sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
             entry.sbj_tokens = self.tokenize(sbj_text)
             obj_text = self.ent_dict.idx2sym[entry.obj_label]
             entry.obj_tokens = self.tokenize(obj_text)
             pred_text = self.pred_dict.idx2sym[entry.pred_label]
             entry.pred_tokens = self.tokenize(pred_text)
+
+            # convert boxes
+            entry.sbj_box = box_convert_and_normalize(entry.sbj_box, entry.width, entry.height)
+            entry.obj_box = box_convert_and_normalize(entry.obj_box, entry.width, entry.height)
+
+            # create pred_box
             entry.pred_box = box_union(entry.sbj_box, entry.obj_box)
+
             new_entries.append(entry)
 
         return new_entries

@@ -34,7 +34,7 @@ class RelationNet (nn.Module):
         :param x: [ B, C, aligned_h, aligned_w ]
         """
         B, C, H, W = x.size()
-        x.view_(B, -1)
+        x = x.view(B, -1)
         x = self.layers_1(x)
         x = torch.cat([sbj_inter, x, obj_inter], dim=1)
         x = self.layers_2(x)

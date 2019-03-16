@@ -24,7 +24,7 @@ class EntityNet (nn.Module):
         :param x: [ B, C, aligned_h, aligned_w ]
         """
         B, C, H, W = x.size()
-        x.view_(B, -1)
+        x = x.view(B, -1)
         intermediate = self.layers_1(x)
         x = self.layers_2(intermediate)
         return x, intermediate

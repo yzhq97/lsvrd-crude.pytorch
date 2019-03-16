@@ -56,36 +56,6 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 #     iou = intersection / union
 #     return iou
 
-# def get_roidb_from_proposals(proposals, gt_boxes, ent_labels, rel_mat, threshold = 0.5):
-#
-#     iou_mat = compute_iou_mat(proposals, gt_boxes)
-#     max_idx = np.argmax(iou_mat, axis=1)
-#     max_iou = iou_mat[ np.arange(len(max_idx)), max_idx ]
-#
-#     pos_proposals = np.where(max_iou >= threshold)
-#     n_pos_props = len(pos_proposals)
-#     pos2gt = max_idx[pos_proposals]
-#
-#     sbj_boxes = []
-#     obj_boxes = []
-#     rlp_labels = []
-#
-#     for i in range(n_pos_props):
-#         for j in range(n_pos_props):
-#             if i != j and pos2gt[i] != pos2gt[j]:
-#                 sbj_gt = pos2gt[i]
-#                 obj_gt = pos2gt[j]
-#                 for pred_id in rel_mat[sbj_gt][obj_gt]:
-#                     sbj_boxes.append(proposals[i])
-#                     obj_boxes.append(proposals[j])
-#                     rlp_labels.append([ ent_labels[sbj_gt], pred_id, ent_labels[obj_gt] ])
-#
-#     sbj_boxes = np.concatenate(sbj_boxes, axis=0)
-#     obj_boxes = np.concatenate(obj_boxes, axis=0)
-#     rlp_labels = np.array(rlp_labels, dtype="int32")
-#
-#     return sbj_boxes, obj_boxes, rlp_labels
-
 def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, use_none_label):
 
     entries = []
@@ -189,9 +159,8 @@ if __name__ == "__main__":
                     entry["image_id"] = image_id
                     entry["width"] = meta["width"]
                     entry["height"] = meta["height"]
-            # elif box_source == "proposal":
-            #     proposals = h5_boxes[meta["file"]][meta["idx"], :meta["objectsNum"], :]
-            #     sbj_boxes, obj_boxes, rlp_labels = get_roidb_from_proposals(proposals, ent_boxes, ent_labels, rel_mat)
+            elif box_source == "proposal":
+                raise NotImplementedError
             else:
                 raise Exception("invalid box source")
 
