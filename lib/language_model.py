@@ -34,12 +34,11 @@ class WordEmbedding(nn.Module):
         return emb
 
 
-class TextEmbedding(nn.Module):
-    """Module for Text embedding
-    """
+class LanguageModel(nn.Module):
+
     def __init__(self, in_dim, hid_dim, n_layers, bidirectional, dropout, rnn_type='GRU'):
 
-        super(TextEmbedding, self).__init__()
+        super(LanguageModel, self).__init__()
         assert rnn_type == 'LSTM' or rnn_type == 'GRU'
         rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
 
