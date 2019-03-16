@@ -201,7 +201,7 @@ if __name__ == "__main__":
             else:
                 raise Exception("invalid box source")
 
-            entries.append(graph_entries)
+            entries.extend(graph_entries)
             triple_cnt[split] += len(graph_entries)
 
         # with open(os.path.join(out_dir, "%s_%s_triples.json" % (split, box_source)), "w") as f:
