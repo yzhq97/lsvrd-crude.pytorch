@@ -45,7 +45,7 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 
 if __name__ == "__main__":
 
-    n_pred_use = 100
+    n_pred_use = 311
     n_rel_max = 50000
 
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
@@ -57,13 +57,14 @@ if __name__ == "__main__":
     object_features_dir = "data/gqa/objects"
     n_h5s = 15
 
-    out_dir = "data/gqa/vrd/vtranse"
+    out_dir = "data/gqa/vrd"
 
     # load dictionaries
     ent_dict = SymbolDictionary.load_from_file(ent_dict_path)
     pred_dict = SymbolDictionary.load_from_file(pred_dict_path)
 
     rel_cnt = [ 0 ] * len(pred_dict)
+    ent_cnt = [ 0 ] * len(ent_dict)
 
     # start
     for sg_file in tqdm(scene_graph_files):
@@ -76,6 +77,9 @@ if __name__ == "__main__":
             ent_labels, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict)
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
 
+            for label in ent_labels:
+                ent_cnt[label] += 1
+
             n_ent = len(idx2eid)
             for i in range(n_ent):
                 for j in range(n_ent):
@@ -87,25 +91,25 @@ if __name__ == "__main__":
                                 rel_cnt[pred_id] += 1
 
     pred_ids = [ _ for _ in range(len(pred_dict)) ]
-    rel_sum = sum(rel_cnt) - rel_cnt[0]
+    rel_sum = sum(rel_cnt)
     rel_portion = [ 1.0 * n / rel_sum for n in rel_cnt ]
     rel_use =  [ n if n <= n_rel_max else n_rel_max for n in rel_cnt ]
     rel_prob = [ 1.0*rel_use[i]/rel_cnt[i] for i in range(len(pred_dict)) ]
     rel_cnt = zip(pred_ids, rel_cnt, rel_portion, rel_use, rel_prob)
     rel_cnt = sorted(rel_cnt, key=lambda x: x[1], reverse=True)
 
-    print("predicate stats:")
     for i in range(len(pred_dict)):
         pred_id, cnt, portion, rel_use, rel_prob = rel_cnt[i]
         print("%3d | %3d %20s %10d %.4f" % (i+1, pred_id, pred_dict.idx2sym[pred_id], cnt, 100 * portion))
 
     pred_dict_use = SymbolDictionary()
     pred_use_prob = []
-    for i in range(1, n_pred_use+1):
+    for i in range(n_pred_use):
         pred_id, cnt, portion, rel_use, rel_prob = rel_cnt[i]
         pred_name = pred_dict.idx2sym[pred_id]
         pred_dict_use.add_sym(pred_name)
         pred_use_prob.append(rel_prob)
     pred_dict_use.dump_to_file("data/gqa/vrd/pred_dict_%d.json" % n_pred_use)
+
     with open("data/gqa/vrd/pred_use_prob_%d.json" % n_pred_use, "w") as f:
         json.dump(pred_use_prob, f)

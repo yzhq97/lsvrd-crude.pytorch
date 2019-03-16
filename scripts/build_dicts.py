@@ -37,7 +37,7 @@ if __name__ == "__main__":
     ent_dict = SymbolDictionary()
     pred_dict = SymbolDictionary()
     ent_dict.add_sym("unknown")
-    pred_dict.add_sym("none")
+    pred_dict.add_sym("has nothing to do with")
     ent_cnt = {}
     pred_cnt = {}
 
