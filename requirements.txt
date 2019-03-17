@@ -1,0 +1,14 @@
+numpy
+scipy
+matplotlib
+scikit-image
+scikit-learn
+Pillow
+opencv-python
+pyyaml
+h5py
+tqdm
+easydict
+nltk
+torch
+torchvision

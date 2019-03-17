@@ -15,13 +15,9 @@ class ConsistencyLoss(nn.Module):
         self.eps = eps
         raise NotImplementedError
 
-    def forward(self, s, p):
+    def forward(self, x, y):
         """
-        N = batch_size
-        :param s: [N, N] pairwise similarity matrix
-        s[i, j] = s(xi, xj)
-        :param p: [N, N] positivity matrix
-        p[i, j] = 1 means that (xi, xj) is a positive pair
+        assumes that each x corresponds with n_samp ys
         """
 
         raise NotImplementedError
