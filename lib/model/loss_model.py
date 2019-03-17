@@ -1,11 +1,8 @@
-import torch
 import torch.nn as nn
-from lib.vision_model import VisionModel
-from lib.language_model import LanguageModel
 from lib.module.similarity_model import PairwiseCosineSimilarity
 from lib.loss.triplet_loss import TripletLoss
 from lib.loss.triplet_softmax_loss import TripletSoftmaxLoss
-from lib.loss.consistency_loss import ConsistencyLoss
+
 
 class LossModel(nn.Module):
 

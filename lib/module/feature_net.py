@@ -21,7 +21,6 @@ class FeatureNet (nn.Module):
 
         self.cnn = nn.Sequential(*layers)
 
-
     def forward(self, x):
         """
         :param x: [ B, C, H, W ]
@@ -29,3 +28,6 @@ class FeatureNet (nn.Module):
         x = self.cnn(x)
         return x
 
+    def freeze(self, do_freeze):
+        for param in self.cnn.parameters():
+            param.requires_grad = ~do_freeze

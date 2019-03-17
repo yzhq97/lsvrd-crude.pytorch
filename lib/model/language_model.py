@@ -66,14 +66,9 @@ class LanguageModel(nn.Module):
 
     def forward(self, x):
         # x: [batch, sequence, in_dim]
-        batch = x.size(0)
-        hidden = self.init_hidden(batch)
-        self.rnn.flatten_parameters()
-        output, hidden = self.rnn(x, hidden)
-
+        output = self.forward_all(x)
         if self.ndirections == 1:
             return output[:, -1]
-
         forward_ = output[:, -1, :self.emb_dim]
         backward = output[:, 0, self.emb_dim:]
         return torch.cat((forward_, backward), dim=1)

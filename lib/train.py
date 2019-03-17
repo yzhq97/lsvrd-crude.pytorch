@@ -63,7 +63,11 @@ def train(vision_model, language_model, loss_model,
 
         logstr = "epoch %2d | train_loss: %5.2f" % (epoch+1, epoch_loss)
 
-        if (epoch + 1) % val_freq == 0:
-            vision_model.train(False)
-            language_model.train(False)
+        # if (epoch + 1) % val_freq == 0:
+        #     vision_model.train(False)
+        #     language_model.train(False)
 
+        vision_model_path = os.path.join(out_dir, "vision_model_%d.pth" % (epoch+1))
+        torch.save(vision_model.state_dict(), vision_model_path)
+        language_model_path = os.path.join(out_dir, "language_model_%d.pth" % (epoch + 1))
+        torch.save(language_model.state_dict(), language_model_path)
