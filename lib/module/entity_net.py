@@ -2,21 +2,21 @@ import torch.nn as nn
 
 class EntityNet (nn.Module):
 
-    def __init__(self, in_dim, hid_dim):
+    def __init__(self, in_dim, emb_dim):
         super(EntityNet, self).__init__()
 
         self.layers_1 = nn.Sequential(
-            nn.Linear(in_dim, hid_dim),
-            nn.BatchNorm1d(hid_dim),
+            nn.Linear(in_dim, emb_dim),
+            nn.BatchNorm1d(emb_dim),
             nn.ReLU(),
-            nn.Linear(hid_dim, hid_dim),
-            nn.BatchNorm1d(hid_dim),
+            nn.Linear(emb_dim, emb_dim),
+            nn.BatchNorm1d(emb_dim),
             nn.ReLU(),
         )
 
         self.layers_2 = nn.Sequential(
-            nn.Linear(hid_dim, hid_dim),
-            nn.BatchNorm1d(hid_dim),
+            nn.Linear(emb_dim, emb_dim),
+            nn.BatchNorm1d(emb_dim),
         )
 
     def forward(self, x):

@@ -36,20 +36,20 @@ class WordEmbedding(nn.Module):
 
 class LanguageModel(nn.Module):
 
-    def __init__(self, in_dim, hid_dim, n_layers, bidirectional, dropout, rnn_type='GRU'):
+    def __init__(self, in_dim, emb_dim, n_layers, bidirectional, dropout, rnn_type='GRU'):
 
         super(LanguageModel, self).__init__()
         assert rnn_type == 'LSTM' or rnn_type == 'GRU'
         rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
 
         self.rnn = rnn_cls(
-            in_dim, hid_dim, n_layers,
+            in_dim, emb_dim, n_layers,
             bidirectional=bidirectional,
             dropout=dropout,
             batch_first=True)
 
         self.in_dim = in_dim
-        self.hid_dim = hid_dim
+        self.emb_dim = emb_dim
         self.n_layers = n_layers
         self.rnn_type = rnn_type
         self.ndirections = 1 + int(bidirectional)
@@ -57,7 +57,7 @@ class LanguageModel(nn.Module):
     def init_hidden(self, batch):
         # just to get the type of tensor
         weight = next(self.parameters()).data
-        hid_shape = (self.n_layers * self.ndirections, batch, self.hid_dim)
+        hid_shape = (self.n_layers * self.ndirections, batch, self.emb_dim)
         if self.rnn_type == 'LSTM':
             return (Variable(weight.new(*hid_shape).zero_()),
                     Variable(weight.new(*hid_shape).zero_()))
@@ -74,8 +74,8 @@ class LanguageModel(nn.Module):
         if self.ndirections == 1:
             return output[:, -1]
 
-        forward_ = output[:, -1, :self.hid_dim]
-        backward = output[:, 0, self.hid_dim:]
+        forward_ = output[:, -1, :self.emb_dim]
+        backward = output[:, 0, self.emb_dim:]
         return torch.cat((forward_, backward), dim=1)
 
     def forward_all(self, x):
@@ -85,3 +85,7 @@ class LanguageModel(nn.Module):
         self.rnn.flatten_parameters()
         output, hidden = self.rnn(x, hidden)
         return output
+
+    @classmethod
+    def build_from_config(cls, cfg):
+        return cls(cfg.in_dim, cfg.emb_dim, cfg.n_layers, cfg.dropout, cfg.bidirectional, cfg.rnn_type)
