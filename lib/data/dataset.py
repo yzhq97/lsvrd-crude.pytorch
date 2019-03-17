@@ -7,6 +7,7 @@ import h5py
 import torch
 import pickle
 import numpy as np
+import torch.tensor as tensor
 from tqdm import tqdm, trange
 from easydict import EasyDict as edict
 from torch.utils.data import Dataset
@@ -35,14 +36,18 @@ class GQATriplesDataset(Dataset):
     resnet_mean = np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
     resnet_std = np.array([0.229, 0.224, 0.224]).reshape(3, 1, 1)
 
+    train = 0
+    eval = 1
+
     def __init__(self, word_dict, ent_dict, pred_dict, tokens_length,
-                 entries, image_dir, image_width, image_height, preload):
+                 entries, image_dir, image_width, image_height, mode, preload):
         """
         :param entries: (subject, object, predicate ) entries. see scripts/generate_balanced_triples.py for details
         :param ent_dict: entity dictionary
         :param pred_dict: predicate dictionary
         :param word_dict: language word dictionary
         :param image_dir: folder containing all gqa images
+        :param mode: "train" or "eval"
         :param preload: whether or not to load all images into memory for faster data loading
         """
 
@@ -55,6 +60,10 @@ class GQATriplesDataset(Dataset):
         self.image_dir = image_dir
         self.image_width = image_width
         self.image_height = image_height
+
+        assert mode in ["train", "val", "test"]
+        self.mode = self.train if mode=="train" else self.eval
+
         self.preload = preload
         self.images = self.preload_images() if preload else None
 
@@ -70,11 +79,13 @@ class GQATriplesDataset(Dataset):
         if self.preload: image = self.images[idx]
         else: image = self.preprocess_image(self.load_image(image_id))
 
-        ret = (
-            image_id, image,
-            torch.tensor(entry.sbj_box), torch.tensor(entry.obj_box), torch.tensor(entry.pred_box),
-            torch.tensor(entry.sbj_tokens), torch.tensor(entry.obj_tokens), torch.tensor(entry.pred_tokens)
-        )
+        ret = [ image_id, image,
+                tensor(entry.sbj_box), tensor(entry.obj_box), tensor(entry.pred_box) ]
+
+        if self.mode == self.train:
+            ret.extend([tensor(entry.sbj_tokens), tensor(entry.obj_tokens), tensor(entry.pred_tokens)])
+        else:
+            ret.extend([tensor(entry.sbj_label), tensor(entry.obj_label), tensor(entry.pred_label)])
 
         return ret
 
@@ -127,12 +138,13 @@ class GQATriplesDataset(Dataset):
             entry = edict(entry)
 
             # tokenize text
-            sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
-            entry.sbj_tokens = self.tokenize(sbj_text)
-            obj_text = self.ent_dict.idx2sym[entry.obj_label]
-            entry.obj_tokens = self.tokenize(obj_text)
-            pred_text = self.pred_dict.idx2sym[entry.pred_label]
-            entry.pred_tokens = self.tokenize(pred_text)
+            if self.mode == self.train:
+                sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
+                entry.sbj_tokens = self.tokenize(sbj_text)
+                obj_text = self.ent_dict.idx2sym[entry.obj_label]
+                entry.obj_tokens = self.tokenize(obj_text)
+                pred_text = self.pred_dict.idx2sym[entry.pred_label]
+                entry.pred_tokens = self.tokenize(pred_text)
 
             # convert boxes
             entry.sbj_box = box_convert_and_normalize(entry.sbj_box, entry.width, entry.height)
