@@ -5,22 +5,18 @@ import numpy as np
 
 
 class WordEmbedding(nn.Module):
-    """Word Embedding
 
-    The n_tokens-th dim is used for padding_idx, which agrees *implicitly*
-    with the definition in Dictionary.
-    """
-    def __init__(self, n_tokens, emb_dim, dropout):
+    def __init__(self, n_words, emb_dim, dropout):
         super(WordEmbedding, self).__init__()
-        self.emb = nn.Embedding(n_tokens+1, emb_dim, padding_idx=n_tokens)
+        self.emb = nn.Embedding(n_words, emb_dim, padding_idx=n_words)
         self.dropout = nn.Dropout(dropout)
-        self.n_tokens = n_tokens
+        self.n_words = n_words
         self.emb_dim = emb_dim
 
     def init_embedding(self, np_file):
         weight_init = torch.from_numpy(np.load(np_file))
-        assert weight_init.shape == (self.n_tokens, self.emb_dim)
-        self.emb.weight.data[:self.n_tokens] = weight_init
+        assert weight_init.shape == (self.n_words, self.emb_dim)
+        self.emb.weight.data[:self.n_words] = weight_init
 
     def freeze(self):
         self.emb.weight.requires_grad = False
@@ -36,19 +32,20 @@ class WordEmbedding(nn.Module):
 
 class LanguageModel(nn.Module):
 
-    def __init__(self, in_dim, emb_dim, n_layers, bidirectional, dropout, rnn_type='GRU'):
+    def __init__(self, word_emb, emb_dim, n_layers, bidirectional, dropout, rnn_type='GRU'):
 
         super(LanguageModel, self).__init__()
         assert rnn_type == 'LSTM' or rnn_type == 'GRU'
         rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
 
         self.rnn = rnn_cls(
-            in_dim, emb_dim, n_layers,
+            word_emb.emb_dim, emb_dim, n_layers,
             bidirectional=bidirectional,
             dropout=dropout,
             batch_first=True)
 
-        self.in_dim = in_dim
+        self.word_emb = word_emb
+        self.in_dim = word_emb.emb_dim
         self.emb_dim = emb_dim
         self.n_layers = n_layers
         self.rnn_type = rnn_type
@@ -82,5 +79,8 @@ class LanguageModel(nn.Module):
         return output
 
     @classmethod
-    def build_from_config(cls, cfg):
-        return cls(cfg.in_dim, cfg.emb_dim, cfg.n_layers, cfg.dropout, cfg.bidirectional, cfg.rnn_type)
+    def build_from_config(cls, cfg, word_dict):
+        word_emb = WordEmbedding(len(word_dict), cfg.word_emb_dim, cfg.dropout)
+        word_emb.init_embedding(cfg.word_emb_init)
+        if not cfg.finetune: word_emb.freeze()
+        return cls(word_emb, cfg.emb_dim, cfg.n_layers, cfg.dropout, cfg.bidirectional, cfg.rnn_type)

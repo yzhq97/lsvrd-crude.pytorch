@@ -158,47 +158,12 @@ class GQATriplesDataset(Dataset):
         return new_entries
 
     @classmethod
-    def load_from_cfgs(cls, cfgs):
+    def create(cls, cfg, word_dict, ent_dict, pred_dict, triples_path, image_dir, mode, preload):
 
-        entries = pickle.load(open(cfgs.triples_path, "rb"))
-        word_dict = SymbolDictionary.load_from_file(cfgs.word_dict_path)
-        ent_dict = SymbolDictionary.load_from_file(cfgs.ent_dict_path)
-        pred_dict = SymbolDictionary.load_from_file(cfgs.pred_dict_path)
-        return cls(word_dict, ent_dict, pred_dict, cfgs.tokens_length,
-                   entries, cfgs.image_dir, cfgs.image_width, cfgs.image_height, cfgs.preload)
-
-
-if __name__ == "__main__":
-    """
-    a unit test for GQATriplesDataset
-    """
-
-    print("cwd: %s" % os.getcwd())
-
-    cfgs = edict()
-
-    cfgs.triples_path = "data/gqa/vrd/val_balanced_triples.pkl"
-    cfgs.word_dict_path = "data/gqa/vrd/word_dict.json"
-    cfgs.ent_dict_path = "data/gqa/vrd/ent_dict.json"
-    cfgs.pred_dict_path = "data/gqa/vrd/pred_dict_311.json"
-
-    cfgs.tokens_length = 5
-
-    cfgs.image_dir = "data/gqa/images"
-    cfgs.image_width = 448
-    cfgs.image_height = 448
-    cfgs.preload = False
-
-    cfgs.batch_size = 32
-
-    dataset = GQATriplesDataset.load_from_cfgs(cfgs)
-    dataloader = DataLoader(dataset=dataset, batch_size=cfgs.batch_size, shuffle=True, pin_memory=True)
-
-    tic_0 = time.time()
-    for i, data in enumerate(dataloader):
-        data = [ d.cuda() if isinstance(d, torch.Tensor) else d for d in data ]
-        tic_1 = time.time()
-        elapsed = tic_1 - tic_0
-        print("batch_size %d, %dms per batch, %dms per sample" %
-              (cfgs.batch_size, int(1000 * elapsed), int(1000 * elapsed / cfgs.batch_size)))
-        tic_0 = time.time()
+        entries = pickle.load(open(triples_path, "rb"))
+        return cls(word_dict, ent_dict, pred_dict,
+                   cfg.language_model.tokens_length,
+                   entries, image_dir,
+                   cfg.vision_model.image_width,
+                   cfg.vision_model.image_height,
+                   mode, preload)

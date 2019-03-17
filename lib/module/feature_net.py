@@ -28,6 +28,10 @@ class FeatureNet (nn.Module):
         x = self.cnn(x)
         return x
 
-    def freeze(self, do_freeze):
+    def freeze(self):
         for param in self.cnn.parameters():
-            param.requires_grad = ~do_freeze
+            param.requires_grad = False
+
+    def defreeze(self):
+        for param in self.cnn.parameters():
+            param.requires_grad = True
