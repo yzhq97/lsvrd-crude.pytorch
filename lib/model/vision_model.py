@@ -49,6 +49,7 @@ class VisionModel(nn.Module):
     def build_from_config(cls, cfg):
         roi_align = RoIAlign(cfg.crop_height, cfg.crop_width)
         feature_net = FeatureNet()
+        if not cfg.finetune: feature_net.freeze()
         entity_net = EntityNet(cfg.in_dim, cfg.emb_dim)
         relation_net = EntityNet(cfg.in_dim, cfg.emb_dim)
         return cls(roi_align, feature_net, entity_net, entity_net, relation_net)
