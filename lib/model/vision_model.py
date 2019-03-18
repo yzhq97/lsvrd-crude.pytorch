@@ -22,6 +22,7 @@ class VisionModel(nn.Module):
         self.subject_net = subject_net
         self.object_net = object_net
         self.relation_net = relation_net
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, images, sbj_boxes, obj_boxes, rel_boxes):
 
@@ -30,7 +31,9 @@ class VisionModel(nn.Module):
 
         box_ind = torch.arange(N, dtype=torch.int).repeat(3)
         boxes = torch.cat([sbj_boxes, obj_boxes, rel_boxes], dim=0)
-        roi_features = self.roi_align(feature_maps, boxes, box_ind)
+        roi_features = self.roi_align(feature_maps, boxes, box_ind) # [ N, 2048, crop_height, crop_width ]
+
+        roi_features = self.avg_pool(roi_features).squeeze_() # [ N, 2048 ]
 
         sbj_emb, sbj_inter = self.subject_net(roi_features[:N])
         obj_emb, obj_inter = self.object_net(roi_features[N:2*N])
@@ -49,7 +52,9 @@ class VisionModel(nn.Module):
     def build_from_config(cls, cfg):
         roi_align = RoIAlign(cfg.crop_height, cfg.crop_width)
         feature_net = FeatureNet()
-        if not cfg.finetune: feature_net.freeze()
+        feature_net.freeze()
+        for layer in cfg.finetune_layers:
+            feature_net.defreeze(layer)
         entity_net = EntityNet(cfg.in_dim, cfg.emb_dim)
         relation_net = EntityNet(cfg.in_dim, cfg.emb_dim)
         return cls(roi_align, feature_net, entity_net, entity_net, relation_net)
