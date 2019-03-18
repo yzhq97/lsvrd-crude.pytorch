@@ -28,19 +28,13 @@ class VisionModel(nn.Module):
         N = images.size(0)
         feature_maps = self.feature_net(images)
 
-        box_ind = torch.arange(N, dtype=torch.int)
+        box_ind = torch.arange(N, dtype=torch.int).repeat(3)
+        boxes = torch.cat([sbj_boxes, obj_boxes, rel_boxes], dim=0)
+        roi_features = self.roi_align(feature_maps, boxes, box_ind)
 
-        # sbj_features = self.perform_roi_align(feature_maps, sbj_boxes, box_ind)
-        # obj_features = self.perform_roi_align(feature_maps, obj_boxes, box_ind)
-        # rel_features = self.perform_roi_align(feature_maps, rel_boxes, box_ind)
-
-        sbj_features = self.roi_align(feature_maps, sbj_boxes, box_ind)
-        obj_features = self.roi_align(feature_maps, obj_boxes, box_ind)
-        rel_features = self.roi_align(feature_maps, rel_boxes, box_ind)
-
-        sbj_emb, sbj_inter = self.subject_net(sbj_features)
-        obj_emb, obj_inter = self.object_net(obj_features)
-        rel_emb = self.relation_net(rel_features, sbj_emb, sbj_inter, obj_emb, obj_inter)
+        sbj_emb, sbj_inter = self.subject_net(roi_features[:N])
+        obj_emb, obj_inter = self.object_net(roi_features[N:2*N])
+        rel_emb = self.relation_net(roi_features[2*N:], sbj_emb, sbj_inter, obj_emb, obj_inter)
 
         return sbj_emb, obj_emb, rel_emb
 
