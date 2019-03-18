@@ -8,7 +8,7 @@
     "backbone": "vgg19",
     "feature_dim": 512,
     "finetune_layers": [],
-    "emb_dim": 512,
+    "emb_dim": 256,
     "crop_size": 7
   },
   "language_model": {
@@ -31,11 +31,11 @@
     "learning_rate": 0.001,
     "learning_rate_decay": 0.1,
     "batch_size": 16,
-    "triples_path": "cache/train_balanced_triples_use_none_label.pkl",
+    "triples_path": "cache/train_balanced_triples.pkl",
     "image_dir": "data/gqa/images"
   },
   "val": {
-    "triples_path": "cache/val_balanced_triples_use_none_label.pkl",
+    "triples_path": "cache/val_balanced_triples.pkl",
     "image_dir": "data/gqa/images",
     "batch_size": 16
   }

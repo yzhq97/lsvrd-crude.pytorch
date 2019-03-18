@@ -5,12 +5,16 @@ class RelationNet (nn.Module):
 
     def __init__(self, in_dim, crop_size, emb_dim):
         super(RelationNet, self).__init__()
+        assert crop_size == 7
 
         self.block1 = nn.Sequential(
-            nn.Linear(crop_size * crop_size * in_dim, emb_dim),
+            nn.Conv2d(in_dim, emb_dim, 3),
             nn.BatchNorm2d(emb_dim),
             nn.ReLU(),
-            nn.Linear(emb_dim, emb_dim),
+            nn.Conv2d(emb_dim, emb_dim, 3),
+            nn.BatchNorm2d(emb_dim),
+            nn.ReLU(),
+            nn.Conv2d(emb_dim, emb_dim, 3),
             nn.BatchNorm2d(emb_dim),
             nn.ReLU(),
         )
@@ -36,6 +40,7 @@ class RelationNet (nn.Module):
         B, C, H, W = x.size()
         x = x.view(B, -1)
         x = self.block1(x)
+        x = x.squeeze_()
         x = torch.cat([sbj_inter, x, obj_inter], dim=1)
         x = self.block2(x)
         x = torch.cat([sbj_emb, x, obj_emb], dim=1)
