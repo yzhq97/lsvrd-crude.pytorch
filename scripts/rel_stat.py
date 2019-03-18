@@ -48,8 +48,8 @@ if __name__ == "__main__":
     n_pred_use = 311
     n_rel_max = 50000
 
-    ent_dict_path = "data/gqa/vrd/ent_dict.json"
-    pred_dict_path = "data/gqa/vrd/pred_dict.json"
+    ent_dict_path = "cache/ent_dict.json"
+    pred_dict_path = "cache/pred_dict.json"
 
     scene_graphs_dir = "data/gqa/scene_graphs"
     scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs.json" ]
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     object_features_dir = "data/gqa/objects"
     n_h5s = 15
 
-    out_dir = "data/gqa/vrd"
+    out_dir = "cache"
 
     # load dictionaries
     ent_dict = SymbolDictionary.load_from_file(ent_dict_path)
@@ -109,7 +109,7 @@ if __name__ == "__main__":
         pred_name = pred_dict.idx2sym[pred_id]
         pred_dict_use.add_sym(pred_name)
         pred_use_prob.append(rel_prob)
-    pred_dict_use.dump_to_file("data/gqa/vrd/pred_dict_%d.json" % n_pred_use)
+    pred_dict_use.dump_to_file(os.path.join(out_dir, "pred_dict_%d.json" % n_pred_use))
 
-    with open("data/gqa/vrd/pred_use_prob_%d.json" % n_pred_use, "w") as f:
+    with open(os.path.join(out_dir, "pred_use_prob_%d.json" % n_pred_use), "w") as f:
         json.dump(pred_use_prob, f)

@@ -85,9 +85,9 @@ if __name__ == "__main__":
         tokens = word_dict.tokenize(pred_name, add_sym=True)
         len_cnt[len(tokens)] += 1
 
-    word_dict.dump_to_file("data/gqa/vrd/word_dict.json")
-    ent_dict.dump_to_file("data/gqa/vrd/ent_dict.json")
-    pred_dict.dump_to_file("data/gqa/vrd/pred_dict.json")
+    word_dict.dump_to_file("cache/word_dict.json")
+    ent_dict.dump_to_file("cache/ent_dict.json")
+    pred_dict.dump_to_file("cache/pred_dict.json")
 
     # get glove words
     print("parsing glove words")
@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     print("saving word embeddings...")
     word_emb, uninit = create_glove_emb(word_dict, glove_words, glove_emb)
-    np.save("data/gqa/vrd/word_emb_init.npy", word_emb)
+    np.save("cache/word_emb_init.npy", word_emb)
 
     print()
     print("%d entity categories, %d predicates" % (len(ent_dict), len(pred_dict)))

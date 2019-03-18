@@ -145,13 +145,13 @@ def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, pred_use_prob, use_none_lab
 
 if __name__ == "__main__":
 
-    image_dir = "dataset/gqa/images"
+    image_dir = "data/gqa/images"
     box_source = "gt"
-    out_dir = "data/gqa/vrd"
+    out_dir = "cache"
 
-    ent_dict_path = "data/gqa/vrd/ent_dict.json"
-    pred_dict_path = "data/gqa/vrd/pred_dict_311.json"
-    pred_use_prob_path = "data/gqa/vrd/pred_use_prob_311.json"
+    ent_dict_path = "cache/ent_dict.json"
+    pred_dict_path = "cache/pred_dict_311.json"
+    pred_use_prob_path = "cache/pred_use_prob_311.json"
 
     use_none_label = False
     random.seed(999)
