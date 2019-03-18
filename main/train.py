@@ -19,7 +19,6 @@ def parse_args():
     parser.add_argument('--n_epochs', type=int, default=10)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)
-    parser.add_argument('--n_gpus', type=int, default=1, help="number of gpus to use")
     parser.add_argument('--val_freq', type=int, default=1, help="run validation between how many epochs")
     parser.add_argument('--out_dir', type=str, default='out')
     args = parser.parse_args()
@@ -67,10 +66,6 @@ if __name__ == "__main__":
     vision_model = VisionModel.build_from_config(cfg.vision_model)
     language_model = LanguageModel.build_from_config(cfg.language_model, word_dict)
     loss_model = LossModel.build_from_config(cfg.loss_model)
-
-    vision_model = nn.DataParallel(vision_model, [_ for _ in range(args.n_gpus)]).cuda()
-    language_model = nn.DataParallel(language_model, [_ for _ in range(args.n_gpus)]).cuda()
-    loss_model = nn.DataParallel(loss_model, [_ for _ in range(args.n_gpus)]).cuda()
 
     print("training started...")
     train(vision_model, language_model, loss_model,

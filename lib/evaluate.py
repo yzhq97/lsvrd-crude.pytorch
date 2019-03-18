@@ -52,12 +52,15 @@ def accuracy(vision_model, loader, ent_embs, pred_embs, k=3):
 
         print("evaluating batch %4d/%4d" % (i+1, n_batches), end="\r")
 
-        with torch.cuda.device(0):
-            data = [item.cuda() for item in data]
+        data = [item.cuda() for item in data]
 
-        image_ids, images, \
-        sbj_boxes, obj_boxes, rel_boxes, \
-        sbj_labels, obj_labels, rel_labels = data
+        images = data[1].float().cuda()
+        sbj_boxes = data[2].float().cuda()
+        obj_boxes = data[3].float().cuda()
+        rel_boxes = data[4].float().cuda()
+        sbj_labels = data[5].cuda()
+        obj_labels = data[6].cuda()
+        rel_labels = data[7].cuda()
 
         sbj_embs, obj_embs, rel_embs = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 

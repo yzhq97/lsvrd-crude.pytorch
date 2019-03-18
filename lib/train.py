@@ -30,15 +30,13 @@ def train(vision_model, language_model, loss_model,
 
             tic_1 = time.time()
 
-            image_ids = data[0]
-            with torch.cuda.device(0):
-                images = data[1].float().cuda()
-                sbj_boxes = data[2].float().cuda()
-                obj_boxes = data[3].float().cuda()
-                rel_boxes = data[4].float().cuda()
-                sbj_tokens = data[5].cuda()
-                obj_tokens = data[6].cuda()
-                rel_tokens = data[7].cuda()
+            images = data[1].float().cuda()
+            sbj_boxes = data[2].float().cuda()
+            obj_boxes = data[3].float().cuda()
+            rel_boxes = data[4].float().cuda()
+            sbj_tokens = data[5].cuda()
+            obj_tokens = data[6].cuda()
+            rel_tokens = data[7].cuda()
 
             tic_2 = time.time()
 
