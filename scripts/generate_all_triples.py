@@ -119,7 +119,7 @@ if __name__ == "__main__":
     ent_dict_path = "data/gqa/vrd/ent_dict.json"
     pred_dict_path = "data/gqa/vrd/pred_dict_311.json"
 
-    use_none_label = True
+    use_none_label = False
 
     scene_graphs_dir = "data/gqa/scene_graphs"
     scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs.json" ]
