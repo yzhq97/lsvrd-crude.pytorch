@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='configs/lsvrd-512.json')
+    parser.add_argument('--config', type=str, default='configs/lsvrd-vgg-512.json')
     parser.add_argument('--n_epochs', type=int, default=10)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)

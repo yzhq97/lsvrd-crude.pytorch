@@ -5,11 +5,11 @@
   "vision_model": {
     "image_height": 448,
     "image_width":448,
-    "crop_height": 7,
-    "crop_width": 7,
-    "in_dim": 2048,
+    "backbone": "resnet101",
+    "feature_dim": 2048,
+    "finetune_layers": [],
     "emb_dim": 512,
-    "finetune": false
+    "crop_size": 7
   },
   "language_model": {
     "rnn_type": "GRU",
@@ -20,7 +20,7 @@
     "n_layers": 1,
     "dropout": 0.0,
     "word_emb_init": "cache/word_emb_init.npy",
-    "finetune_layers": [ "layer4" ]
+    "finetune": false
   },
   "loss_model": {
     "similarity_norm": 3.0,
