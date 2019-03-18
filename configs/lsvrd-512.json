@@ -1,7 +1,7 @@
 {
   "word_dict": "data/gqa/vrd/word_dict.json",
-  "ent_dict": "data/gqa/ent_dict.json",
-  "pred_dict": "data/gqa/pred_dict_311.json",
+  "ent_dict": "data/gqa/vrd/ent_dict.json",
+  "pred_dict": "data/gqa/vrd/pred_dict_311.json",
   "vision_model": {
     "image_height": 448,
     "image_width":448,
@@ -19,7 +19,8 @@
     "emb_dim": 512,
     "n_layers": 1,
     "dropout": 0.0,
-    "word_emb_init": "data/gqa/word_emb_init.npy"
+    "word_emb_init": "data/gqa/vrd/word_emb_init.npy",
+    "finetune": false
   },
   "loss_model": {
     "similarity_norm": 3.0,
@@ -29,13 +30,13 @@
   "train": {
     "learning_rate": 0.001,
     "learning_rate_decay": 0.1,
-    "batch_size": 32,
-    "triples_path": "train_balanced_triples.pkl",
+    "batch_size": 16,
+    "triples_path": "data/gqa/vrd/train_balanced_triples.pkl",
     "image_dir": "data/gqa/images"
   },
   "val": {
-    "triples_path": "val_balanced_triples.pkl",
+    "triples_path": "data/gqa/vrd/val_balanced_triples.pkl",
     "image_dir": "data/gqa/images",
-    "batch_size": 32
+    "batch_size": 16
   }
 }

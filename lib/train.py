@@ -12,10 +12,11 @@ def train(vision_model, language_model, loss_model,
           n_epochs, val_freq, out_dir, cfg):
 
     os.makedirs(out_dir, exist_ok=True)
-    optimizer = torch.optim.Adam([vision_model.parameters(), language_model.parameters()],
-                                 lr=cfg.learning_rate)
+    params = list(vision_model.parameters()) + list(language_model.parameters())
+    params = [ param for param in params if param.requires_grad ]
+    optimizer = torch.optim.Adam(params, lr=cfg.train.learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1,
-                                                gamma=cfg.learning_rate_decay)
+                                                gamma=cfg.train.learning_rate_decay)
     logger = Logger(os.path.join(out_dir, "log.txt"))
     n_batches = len(train_loader)
 
@@ -29,12 +30,15 @@ def train(vision_model, language_model, loss_model,
 
             tic_1 = time.time()
 
+            image_ids = data[0]
             with torch.cuda.device(0):
-                data = [ item.cuda() for item in data ]
-
-            image_ids, images, \
-            sbj_boxes, obj_boxes, rel_boxes, \
-            sbj_tokens, obj_tokens, rel_tokens = data
+                images = data[1].float().cuda()
+                sbj_boxes = data[2].float().cuda()
+                obj_boxes = data[3].float().cuda()
+                rel_boxes = data[4].float().cuda()
+                sbj_tokens = data[5].cuda()
+                obj_tokens = data[6].cuda()
+                rel_tokens = data[7].cuda()
 
             tic_2 = time.time()
 

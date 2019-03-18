@@ -31,7 +31,7 @@ class LossModel(nn.Module):
     @classmethod
     def build_from_config(cls, cfg):
         similarity = PairwiseCosineSimilarity()
-        triplet_loss = TripletLoss(cfg.loss.n_neg, cfg.margin)
+        triplet_loss = TripletLoss(cfg.n_neg, cfg.margin)
         triplet_softmax_loss = TripletSoftmaxLoss(cfg.n_neg, cfg.margin)
         return cls(similarity, triplet_loss, triplet_softmax_loss, cfg.similarity_norm)
 

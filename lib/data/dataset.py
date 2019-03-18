@@ -7,7 +7,6 @@ import h5py
 import torch
 import pickle
 import numpy as np
-import torch.tensor as tensor
 from tqdm import tqdm, trange
 from easydict import EasyDict as edict
 from torch.utils.data import Dataset
@@ -39,8 +38,8 @@ class GQATriplesDataset(Dataset):
     train = 0
     eval = 1
 
-    def __init__(self, word_dict, ent_dict, pred_dict, tokens_length,
-                 entries, image_dir, image_width, image_height, mode, preload):
+    def __init__(self, entries, word_dict, ent_dict, pred_dict, tokens_length,
+                 image_dir, image_width, image_height, mode, preload):
         """
         :param entries: (subject, object, predicate ) entries. see scripts/generate_balanced_triples.py for details
         :param ent_dict: entity dictionary
@@ -51,6 +50,9 @@ class GQATriplesDataset(Dataset):
         :param preload: whether or not to load all images into memory for faster data loading
         """
 
+        assert mode in ["train", "eval"]
+        self.mode = self.train if mode == "train" else self.eval
+
         self.word_dict = word_dict
         self.ent_dict = ent_dict
         self.pred_dict = pred_dict
@@ -60,9 +62,6 @@ class GQATriplesDataset(Dataset):
         self.image_dir = image_dir
         self.image_width = image_width
         self.image_height = image_height
-
-        assert mode in ["train", "val", "test"]
-        self.mode = self.train if mode=="train" else self.eval
 
         self.preload = preload
         self.images = self.preload_images() if preload else None
@@ -79,13 +78,14 @@ class GQATriplesDataset(Dataset):
         if self.preload: image = self.images[idx]
         else: image = self.preprocess_image(self.load_image(image_id))
 
-        ret = [ image_id, image,
-                tensor(entry.sbj_box), tensor(entry.obj_box), tensor(entry.pred_box) ]
+        ret = [ image, entry.sbj_box, entry.obj_box, entry.pred_box ]
 
         if self.mode == self.train:
-            ret.extend([tensor(entry.sbj_tokens), tensor(entry.obj_tokens), tensor(entry.pred_tokens)])
+            ret.extend([entry.sbj_tokens, entry.obj_tokens, entry.pred_tokens])
         else:
-            ret.extend([tensor(entry.sbj_label), tensor(entry.obj_label), tensor(entry.pred_label)])
+            ret.extend([entry.sbj_label, entry.obj_label, entry.pred_label])
+
+        ret = [ image_id ] + [ torch.tensor(item) for item in ret ]
 
         return ret
 
@@ -161,9 +161,9 @@ class GQATriplesDataset(Dataset):
     def create(cls, cfg, word_dict, ent_dict, pred_dict, triples_path, image_dir, mode, preload):
 
         entries = pickle.load(open(triples_path, "rb"))
-        return cls(word_dict, ent_dict, pred_dict,
+        return cls(entries, word_dict, ent_dict, pred_dict,
                    cfg.language_model.tokens_length,
-                   entries, image_dir,
+                   image_dir,
                    cfg.vision_model.image_width,
                    cfg.vision_model.image_height,
                    mode, preload)

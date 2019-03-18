@@ -5,10 +5,13 @@ import numpy as np
 
 
 class WordEmbedding(nn.Module):
+    """
+    assumes padding index to be zero
+    """
 
     def __init__(self, n_words, emb_dim, dropout):
         super(WordEmbedding, self).__init__()
-        self.emb = nn.Embedding(n_words, emb_dim, padding_idx=n_words)
+        self.emb = nn.Embedding(n_words, emb_dim, padding_idx=0)
         self.dropout = nn.Dropout(dropout)
         self.n_words = n_words
         self.emb_dim = emb_dim
@@ -83,4 +86,4 @@ class LanguageModel(nn.Module):
         word_emb = WordEmbedding(len(word_dict), cfg.word_emb_dim, cfg.dropout)
         word_emb.init_embedding(cfg.word_emb_init)
         if not cfg.finetune: word_emb.freeze()
-        return cls(word_emb, cfg.emb_dim, cfg.n_layers, cfg.dropout, cfg.bidirectional, cfg.rnn_type)
+        return cls(word_emb, cfg.emb_dim, cfg.n_layers, cfg.bidirectional, cfg.dropout, cfg.rnn_type)

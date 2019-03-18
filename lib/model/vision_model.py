@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 from roi_align.roi_align import RoIAlign
 from lib.module.feature_net import FeatureNet
 from lib.module.entity_net import EntityNet
@@ -29,6 +30,10 @@ class VisionModel(nn.Module):
 
         box_ind = torch.arange(N, dtype=torch.int)
 
+        # sbj_features = self.perform_roi_align(feature_maps, sbj_boxes, box_ind)
+        # obj_features = self.perform_roi_align(feature_maps, obj_boxes, box_ind)
+        # rel_features = self.perform_roi_align(feature_maps, rel_boxes, box_ind)
+
         sbj_features = self.roi_align(feature_maps, sbj_boxes, box_ind)
         obj_features = self.roi_align(feature_maps, obj_boxes, box_ind)
         rel_features = self.roi_align(feature_maps, rel_boxes, box_ind)
@@ -39,6 +44,12 @@ class VisionModel(nn.Module):
 
         return sbj_emb, obj_emb, rel_emb
 
+    def perform_roi_align(self, feature_maps, boxes, box_ind):
+        feature_maps = Variable(feature_maps, requires_grad=True)
+        boxes = Variable(boxes, requires_grad = False)
+        box_ind = Variable(box_ind, requires_grad = False)
+        aligned = self.roi_align(feature_maps, boxes, box_ind)
+        return aligned
 
     @classmethod
     def build_from_config(cls, cfg):

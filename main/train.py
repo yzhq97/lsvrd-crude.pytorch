@@ -59,7 +59,7 @@ if __name__ == "__main__":
     print("loading val data...")
     val_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict,
                                        cfg.val.triples_path, cfg.val.image_dir,
-                                       mode="val", preload=False)
+                                       mode="eval", preload=False)
     val_loader = DataLoader(train_set, batch_size=cfg.val.batch_size,
                             shuffle=True, num_workers=args.n_workers)
 
