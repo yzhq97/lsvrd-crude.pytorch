@@ -6,7 +6,7 @@ from tqdm import tqdm
 from lib.utils import Logger
 from lib.evaluate import get_sym_emb, accuracy
 
-def train(vision_model, language_model, loss_model,
+def train(word_emb, vision_model, language_model, loss_model,
           train_loader, val_loader,
           word_dict, ent_dict, pred_dict,
           n_epochs, val_freq, out_dir, cfg):
@@ -43,9 +43,9 @@ def train(vision_model, language_model, loss_model,
             optimizer.zero_grad()
 
             sbj_v_emb, obj_v_emb, rel_v_emb = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
-            sbj_t_emb = language_model(sbj_tokens)
-            obj_t_emb = language_model(obj_tokens)
-            rel_t_emb = language_model(rel_tokens)
+            sbj_t_emb = language_model(word_emb(sbj_tokens))
+            obj_t_emb = language_model(word_emb(obj_tokens))
+            rel_t_emb = language_model(word_emb(rel_tokens))
 
             sbj_loss = loss_model(sbj_v_emb, sbj_t_emb)
             obj_loss = loss_model(sbj_v_emb, obj_t_emb)

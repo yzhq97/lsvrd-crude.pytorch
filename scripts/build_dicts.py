@@ -33,12 +33,13 @@ if __name__ == "__main__":
     # get dictionary
 
     word_dict = SymbolDictionary()
+    word_dict.add_sym("unknown")
     len_cnt = [0] * 8
 
     ent_dict = SymbolDictionary()
     pred_dict = SymbolDictionary()
     ent_dict.add_sym("unknown")
-    pred_dict.add_sym("has nothing to do with")
+    pred_dict.add_sym("unknown")
     ent_cnt = {}
     pred_cnt = {}
 

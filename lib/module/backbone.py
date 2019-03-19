@@ -31,19 +31,25 @@ class ResNet (nn.Module):
 
     def freeze(self, layer="all"):
         if layer == "all":
+            self.train(False)
+            self.eval()
             for param in self.parameters():
                 param.requires_grad = False
         else:
             layer = getattr(self, layer)
+            layer.train(False)
+            layer.eval()
             for param in layer.parameters():
                 param.requires_grad = False
 
     def defreeze(self, layer="all"):
         if layer == "all":
+            self.train(True)
             for param in self.parameters():
                 param.requires_grad = True
         else:
             layer = getattr(self, layer)
+            layer.train(True)
             for param in layer.parameters():
                 param.requires_grad = True
 
@@ -80,19 +86,25 @@ class VGGNet (nn.Module):
 
     def freeze(self, layer="all"):
         if layer == "all":
+            self.train(False)
+            self.eval()
             for param in self.parameters():
                 param.requires_grad = False
         else:
             layer = self.layers_dict[layer]
+            self.features[layer].train(False)
+            self.features[layer].eval()
             for param in self.features[layer].parameters():
                 param.requires_grad = False
 
     def defreeze(self, layer="all"):
         if layer == "all":
+            self.train(True)
             for param in self.parameters():
                 param.requires_grad = True
         else:
             layer = self.layers_dict[layer]
+            self.features[layer].train(True)
             for param in self.features[layer].parameters():
                 param.requires_grad = True
 

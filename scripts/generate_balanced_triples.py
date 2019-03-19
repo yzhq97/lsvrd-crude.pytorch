@@ -153,7 +153,7 @@ if __name__ == "__main__":
     pred_dict_path = "cache/pred_dict_311.json"
     pred_use_prob_path = "cache/pred_use_prob_311.json"
 
-    use_none_label = False
+    use_none_label = True
     random.seed(999)
 
     scene_graphs_dir = "data/gqa/scene_graphs"

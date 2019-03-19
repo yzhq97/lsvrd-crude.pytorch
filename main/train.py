@@ -6,7 +6,7 @@ import torch.nn as nn
 import argparse
 from lib.train import train
 from lib.model.vision_model import VisionModel
-from lib.model.language_model import LanguageModel
+from lib.model.language_model import LanguageModel, WordEmbedding
 from lib.model.loss_model import LossModel
 from lib.data.sym_dict import SymbolDictionary
 from lib.data.dataset import GQATriplesDataset
@@ -47,6 +47,14 @@ if __name__ == "__main__":
     ent_dict = SymbolDictionary.load_from_file(cfg.ent_dict)
     pred_dict = SymbolDictionary.load_from_file(cfg.pred_dict)
 
+    print("building model")
+    word_emb = WordEmbedding.build_from_config(cfg.language_model, word_dict).cuda()
+    word_emb.init_embedding(cfg.language_model.word_emb_init)
+    word_emb.freeze()
+    vision_model = VisionModel.build_from_config(cfg.vision_model).cuda()
+    language_model = LanguageModel.build_from_config(cfg.language_model).cuda()
+    loss_model = LossModel.build_from_config(cfg.loss_model).cuda()
+
     print("loading train data...")
     train_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict,
                                          cfg.train.triples_path, cfg.train.image_dir,
@@ -61,12 +69,7 @@ if __name__ == "__main__":
     val_loader = DataLoader(train_set, batch_size=cfg.val.batch_size,
                             shuffle=True, num_workers=args.n_workers)
 
-    print("building model")
-    vision_model = VisionModel.build_from_config(cfg.vision_model).cuda()
-    language_model = LanguageModel.build_from_config(cfg.language_model, word_dict).cuda()
-    loss_model = LossModel.build_from_config(cfg.loss_model).cuda()
-
     print("training started...")
-    train(vision_model, language_model, loss_model,
+    train(word_emb, vision_model, language_model, loss_model,
           train_loader, val_loader, word_dict, ent_dict, pred_dict,
           args.n_epochs, args.val_freq, args.out_dir, cfg)
