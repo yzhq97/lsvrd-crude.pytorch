@@ -4,8 +4,9 @@ import cv2
 import json
 import math
 import torch
+import threading
 import numpy as np
-from tqdm import tqdm
+from tqdm import trange
 from easydict import EasyDict as edict
 from lib.module.backbone import backbones
 from lib.data.h5io import H5DataWriter
@@ -33,6 +34,30 @@ def preprocess_image(image, height, width):
 
     return image
 
+class LoaderThread(threading.Thread):
+    def __init__(self, files, height, width, output):
+        threading.Thread.__init__(self)
+        self.files = files
+        self.height = height
+        self.width = width
+        self.output = output
+    def run(self):
+        images = [load_image(vcfg.image_dir, file) for file in self.files]
+        images = [preprocess_image(image, vcfg.image_height, vcfg.image_width) for image in images]
+        images = [np.expand_dims(image, axis=0) for image in images]
+        self.output.extend(images)
+
+class WriterThread(threading.Thread):
+    def __init__(self, h5_writer, features, files):
+        threading.Thread.__init__(self)
+        self.h5_writer = h5_writer
+        self.features = features
+        self.files = files
+    def run(self):
+        for i, file in enumerate(self.files):
+            image_id, _ = os.path.splitext(file)
+            self.h5_writer.put(image_id, self.features[i])
+
 if __name__ == "__main__":
 
     config = "configs/lsvrd-resnet101-512.json"
@@ -51,31 +76,39 @@ if __name__ == "__main__":
     }]
 
     os.makedirs(vcfg.cache_dir, exist_ok=True)
-    writer = H5DataWriter(vcfg.cache_dir, cfg.dataset, len(files), 16, fields)
+    h5_writer = H5DataWriter(vcfg.cache_dir, cfg.dataset, len(files), 16, fields)
+
+    print("building %s ..." % vcfg.backbone)
     backbone_cls = backbones[vcfg.backbone]
     cnn = backbone_cls()
     cnn.freeze()
     cnn.cuda()
 
     print("pre-extracting features with %s ..." % vcfg.backbone)
-    pbar = tqdm(total=len(files))
     n_batches = int(math.ceil(len(files)/batch_size))
-    for b in range(n_batches):
 
-        batch_files = files[b*batch_size: (b+1)*batch_size]
-        images = [ load_image(vcfg.image_dir, file) for file in batch_files ]
-        images = [ preprocess_image(image, vcfg.image_height, vcfg.image_width) for image in images ]
-        images = [ np.expand_dims(image, axis=0) for image in images ]
-        images = np.concatenate(images, axis=0)
+    batch_images = []
+    loader = LoaderThread(files[:batch_size], vcfg.image_height, vcfg.image_width, batch_images)
+    loader.start()
+
+    writer = None
+
+    for b in trange(n_batches):
+
+        loader.join()
+        images = np.concatenate(batch_images, axis=0)
+        if b + 1 < n_batches:
+            batch_images = []
+            loader = LoaderThread(files[(b+1)*batch_size: (b+2)*batch_size],
+                                  vcfg.image_height, vcfg.image_width, batch_images)
+            loader.start()
+
         images = torch.from_numpy(images).float().cuda()
         features = cnn(images).data.cpu().numpy()
 
-        for i, file in enumerate(batch_files):
-            image_id, _ = os.path.splitext(file)
-            feature = features[i]
-            writer.put(image_id, feature)
+        if writer is not None: writer.join()
+        writer = WriterThread(h5_writer, features, files[b*batch_size: (b+1)*batch_size])
+        writer.start()
 
-        pbar.update(len(batch_files))
-
-    pbar.close()
-    writer.close()
+    writer.join()
+    h5_writer.close()
