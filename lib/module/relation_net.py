@@ -8,7 +8,7 @@ class RelationNet (nn.Module):
         assert crop_size == 7
 
         self.block1 = nn.Sequential(
-            nn.Conv2d(in_dim, int(emb_dim / 2), kernel_size=3, stride=1),
+            nn.Conv2d(in_dim, int(emb_dim / 2), kernel_size=3, stride=2),
             nn.BatchNorm2d(int(emb_dim / 2)),
             nn.ReLU(),
             nn.Conv2d(int(emb_dim / 2), emb_dim, 3),
@@ -36,7 +36,7 @@ class RelationNet (nn.Module):
         """
         B, C, H, W = x.size()
         x = self.block1(x)
-        x = x.squeeze_()
+        x = x.squeeze()
         x = torch.cat([sbj_inter, x, obj_inter], dim=1)
         x = self.block2(x)
         x = torch.cat([sbj_emb, x, obj_emb], dim=1)

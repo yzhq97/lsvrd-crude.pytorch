@@ -21,7 +21,7 @@ class LossModel(nn.Module):
 
     def forward(self, v_emb, l_emb):
 
-        s = self.similarity(v_emb, l_emb).mul_(self.similarity_norm)
+        s = self.similarity(v_emb, l_emb).mul(self.similarity_norm)
         tr_loss = self.triplet_loss(s.t())
         trsm_loss = self.triplet_softmax_loss(s)
         loss = tr_loss + trsm_loss

@@ -31,13 +31,13 @@ class TripletLoss(nn.Module):
         p = torch.eye(N, dtype=torch.int8)
 
         pos_ind = p.nonzero()
-        pos_s = s[pos_ind[:, 0], pos_ind[:, 1]].resize_([N, 1]) # [N, 1]
+        pos_s = s[pos_ind[:, 0], pos_ind[:, 1]].view([N, 1])
 
-        neg_ind = p.neg_().add_(1).nonzero()
-        neg_s = s[neg_ind[:, 0], neg_ind[:, 1]].resize_([N, -1]) # [N, N-1]
+        neg_ind = p.neg().add_(1).nonzero()
+        neg_s = s[neg_ind[:, 0], neg_ind[:, 1]].view([N, N-1])
 
         loss = neg_s - pos_s + self.margin # [ N, N-1 ]
-        eps = torch.ones_like(loss).mul_(self.eps)
+        eps = torch.ones_like(loss).mul(self.eps)
         loss = torch.where(loss > 0, loss, eps)
 
         loss, _ = loss.topk(k=self.n_neg, dim=1, sorted=False)

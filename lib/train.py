@@ -43,7 +43,9 @@ def train(vision_model, language_model, loss_model,
             optimizer.zero_grad()
 
             sbj_v_emb, obj_v_emb, rel_v_emb = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
-            sbj_t_emb, obj_t_emb, rel_t_emb = language_model(sbj_tokens, obj_tokens, rel_tokens)
+            sbj_t_emb = language_model(sbj_tokens)
+            obj_t_emb = language_model(obj_tokens)
+            rel_t_emb = language_model(rel_tokens)
 
             sbj_loss = loss_model(sbj_v_emb, sbj_t_emb)
             obj_loss = loss_model(obj_v_emb, obj_t_emb)
