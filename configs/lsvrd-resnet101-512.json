@@ -34,12 +34,12 @@
   "train": {
     "learning_rate": 0.001,
     "learning_rate_decay": 0.1,
-    "batch_size": 16,
+    "batch_size": 64,
     "triples_path": "cache/train_balanced_triples_use_none_label.pkl",
     "preload": false
   },
   "val": {
-    "batch_size": 16,
+    "batch_size": 64,
     "triples_path": "cache/val_balanced_triples_use_none_label.pkl",
     "preload": false
   }

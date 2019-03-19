@@ -100,7 +100,7 @@ class GQATriplesDataset(Dataset):
         entry = self.entries[idx]
         image_id = entry.image_id
 
-        if self.pre_extract: image = self.h5_loader[image_id]
+        if self.pre_extract: image = self.h5_loader[image_id][0]
         elif self.preload: image = self.images[idx]
         else: image = self.preprocess_image(self.load_image(image_id))
 
