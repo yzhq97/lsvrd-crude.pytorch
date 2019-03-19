@@ -1,13 +1,16 @@
 {
+  "dataset": "gqa",
   "word_dict": "cache/word_dict.json",
   "ent_dict": "cache/ent_dict.json",
   "pred_dict": "cache/pred_dict_311.json",
   "vision_model": {
     "image_height": 448,
     "image_width":448,
-    "backbone": "vgg19",
-    "feature_dim": 512,
-    "finetune_layers": [],
+    "backbone": "resnet101",
+    "feature_dim": 2048,
+    "pre_extract": true,
+    "image_dir": "data/gqa/images",
+    "cache_dir": "cache/gqa_resnet101",
     "emb_dim": 512,
     "crop_size": 7
   },
@@ -31,11 +34,11 @@
     "learning_rate_decay": 0.1,
     "batch_size": 16,
     "triples_path": "cache/train_balanced_triples_use_none_label.pkl",
-    "image_dir": "data/gqa/images"
+    "preload": false
   },
   "val": {
+    "batch_size": 16,
     "triples_path": "cache/val_balanced_triples_use_none_label.pkl",
-    "image_dir": "data/gqa/images",
-    "batch_size": 16
+    "prelaod": false
   }
 }

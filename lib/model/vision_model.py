@@ -6,6 +6,17 @@ from lib.module.backbone import backbones
 from lib.module.entity_net import EntityNet
 from lib.module.relation_net import RelationNet
 
+class Identity(nn.Module):
+
+    def __init__(self):
+        super(Identity, self).__init__()
+
+    def forward(self, x):
+        return x
+
+    def freeze(self):
+        pass
+
 class VisionModel(nn.Module):
 
     def __init__(self, backbone,
@@ -42,20 +53,15 @@ class VisionModel(nn.Module):
     @classmethod
     def build_from_config(cls, cfg):
 
-        backbone_cls = backbones[cfg.backbone]
+        backbone_cls = Identity if cfg.pre_extract else backbones[cfg.backbone]
         backbone = backbone_cls()
         backbone.freeze()
-        for layer in cfg.finetune_layers:
-            backbone.defreeze(layer)
 
         roi_align = RoIAlign(cfg.crop_size, cfg.crop_size)
         entity_net = EntityNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
         relation_net = RelationNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
 
         model = cls(backbone, roi_align, entity_net, relation_net)
-
-        # for child in model.children():
-        #     print(child)
 
         return model
 

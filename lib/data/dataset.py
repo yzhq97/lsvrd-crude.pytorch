@@ -3,7 +3,7 @@ sys.path.insert(0, os.getcwd())
 import cv2
 import time
 import json
-import h5py
+import math
 import torch
 import pickle
 import numpy as np
@@ -12,6 +12,7 @@ from easydict import EasyDict as edict
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
 from lib.data.sym_dict import SymbolDictionary
+from lib.module.backbone import backbones
 
 
 def get_pos_mat(labels):
@@ -38,20 +39,28 @@ class GQATriplesDataset(Dataset):
     train = 0
     eval = 1
 
-    def __init__(self, entries, word_dict, ent_dict, pred_dict, tokens_length,
-                 image_dir, image_width, image_height, mode, preload):
+    def __init__(self, name, entries,
+                 word_dict, ent_dict, pred_dict, tokens_length,
+                 image_dir, image_width, image_height,
+                 mode, preload,
+                 pre_extract=False, cache_dir=None, backbone=None, feature_dim=None):
         """
+        :param name: dataset name
         :param entries: (subject, object, predicate ) entries. see scripts/generate_balanced_triples.py for details
         :param ent_dict: entity dictionary
         :param pred_dict: predicate dictionary
         :param word_dict: language word dictionary
         :param image_dir: folder containing all gqa images
+        :param cache_dir: folder containing extracted features
         :param mode: "train" or "eval"
+        :param preload: whether or not to extract all feature maps prior to training
         :param preload: whether or not to load all images into memory for faster data loading
         """
 
         assert mode in ["train", "eval"]
         self.mode = self.train if mode == "train" else self.eval
+
+        self.name = name
 
         self.word_dict = word_dict
         self.ent_dict = ent_dict
@@ -62,6 +71,13 @@ class GQATriplesDataset(Dataset):
         self.image_dir = image_dir
         self.image_width = image_width
         self.image_height = image_height
+
+        self.pre_extract = pre_extract
+        self.cache_dir = cache_dir
+        self.backbone = backbone
+        self.feature_dim = feature_dim
+
+        if self.pre_extract: self.pre_extract_features()
 
         self.preload = preload
         self.images = self.preload_images() if preload else None
@@ -76,7 +92,7 @@ class GQATriplesDataset(Dataset):
         image_id = entry.image_id
 
         if self.preload: image = self.images[idx]
-        else: image = self.preprocess_image(self.load_image(image_id))
+        else: image = self.preprocess_image(self.load_image(image_id, extracted=self.pre_extract))
 
         ret = [ image, entry.sbj_box, entry.obj_box, entry.pred_box ]
 
@@ -89,11 +105,15 @@ class GQATriplesDataset(Dataset):
 
         return ret
 
-    def load_image(self, image_id):
+    def load_image(self, image_id, extracted=False):
 
-        image_path = os.path.join(self.image_dir, "%s.jpg" % image_id)
-        image = cv2.imread(image_path)
-        if image is None: raise Exception("image %s does not exist" % image_path)
+        if extracted:
+            image_path = os.path.join(self.cache_dir, "%s.npy" % image_id)
+            image = np.load(image_path)
+        else:
+            image_path = os.path.join(self.image_dir, "%s.jpg" % image_id)
+            image = cv2.imread(image_path)
+            if image is None: raise Exception("image %s does not exist" % image_path)
         return image
 
     def tokenize(self, text):
@@ -118,12 +138,13 @@ class GQATriplesDataset(Dataset):
     def preload_images(self):
 
         print("loading images into memory ...")
-        images = np.zeros([len(self), 3, self.image_height, self.image_width], dtype=np.float32)
+        channels = self.feature_dim if self.pre_extract else 3
+        images = np.zeros([len(self), channels, self.image_height, self.image_width], dtype=np.float32)
 
         for i in trange(len(self)):
             image_id = self.entries[i].image_id
             image = self.load_image(image_id)
-            image = self.preprocess_image(image)
+            if not self.pre_extract: image = self.preprocess_image(image)
             images[i] = image
 
         return images
@@ -157,13 +178,58 @@ class GQATriplesDataset(Dataset):
 
         return new_entries
 
+    def pre_extract_features(self):
+
+        print("pre-extracting features with %s ..." % self.backbone)
+        os.makedirs(self.cache_dir, exist_ok=True)
+        backbone_cls = backbones[self.backbone]
+        cnn = backbone_cls()
+        cnn.freeze()
+        cnn.cuda()
+
+        image_ids = []
+        batch_size = 8
+
+        for entry in self.entries:
+            image_id = entry.image_id
+            out_path = os.path.join(self.cache_dir, "%s.npy" % image_id)
+            if not os.path.exists(out_path):
+                image_ids.append(image_id)
+
+        pbar = tqdm(total=len(image_ids))
+        n_batches = int(math.ceil(len(image_ids)/batch_size))
+        for b in range(n_batches):
+
+            batch_ids = image_ids[b*batch_size: (b+1)*batch_size]
+            images = [ self.load_image(image_id) for image_id in batch_ids ]
+            images = [ self.preprocess_image(image) for image in images ]
+            images = [ np.expand_dims(image, axis=0) for image in images ]
+            images = np.concatenate(images, axis=0)
+            images = torch.from_numpy(images).float().cuda()
+            features = cnn(images)
+
+            for i, image_id in enumerate(batch_ids):
+                feature = features[i]
+                out_path = os.path.join(self.cache_dir, "%s.npy" % image_id)
+                np.save(out_path, feature)
+
+            pbar.update(len(batch_ids))
+
+        pbar.close()
+
     @classmethod
-    def create(cls, cfg, word_dict, ent_dict, pred_dict, triples_path, image_dir, mode, preload):
+    def create(cls, cfg, word_dict, ent_dict, pred_dict, triples_path, mode, preload):
 
         entries = pickle.load(open(triples_path, "rb"))
-        return cls(entries, word_dict, ent_dict, pred_dict,
+        return cls(cfg.dataset,
+                   entries, word_dict, ent_dict, pred_dict,
                    cfg.language_model.tokens_length,
-                   image_dir,
+                   cfg.vision_model.image_dir,
                    cfg.vision_model.image_width,
                    cfg.vision_model.image_height,
-                   mode, preload)
+                   mode, preload,
+                   cfg.vision_model.pre_extract,
+                   cfg.vision_model.cache_dir,
+                   cfg.vision_model.backbone,
+                   cfg.vision_model.feature_dim,)
+

@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='configs/lsvrd-vgg19-512.json')
+    parser.add_argument('--config', type=str, default='configs/lsvrd-resnet101-512.json')
     parser.add_argument('--n_epochs', type=int, default=10)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)
@@ -47,6 +47,18 @@ if __name__ == "__main__":
     ent_dict = SymbolDictionary.load_from_file(cfg.ent_dict)
     pred_dict = SymbolDictionary.load_from_file(cfg.pred_dict)
 
+    print("loading train data...")
+    train_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict, cfg.train.triples_path,
+                                         mode="train", preload=cfg.train.preload)
+    train_loader = DataLoader(train_set, batch_size=cfg.train.batch_size,
+                              shuffle=True, num_workers=args.n_workers)
+
+    print("loading val data...")
+    val_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict, cfg.val.triples_path,
+                                       mode="eval", preload=cfg.val.preload)
+    val_loader = DataLoader(train_set, batch_size=cfg.val.batch_size,
+                            shuffle=True, num_workers=args.n_workers)
+
     print("building model")
     word_emb = WordEmbedding.build_from_config(cfg.language_model, word_dict).cuda()
     word_emb.init_embedding(cfg.language_model.word_emb_init)
@@ -54,20 +66,6 @@ if __name__ == "__main__":
     vision_model = VisionModel.build_from_config(cfg.vision_model).cuda()
     language_model = LanguageModel.build_from_config(cfg.language_model).cuda()
     loss_model = LossModel.build_from_config(cfg.loss_model).cuda()
-
-    print("loading train data...")
-    train_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict,
-                                         cfg.train.triples_path, cfg.train.image_dir,
-                                         mode="train", preload=False)
-    train_loader = DataLoader(train_set, batch_size=cfg.train.batch_size,
-                              shuffle=True, num_workers=args.n_workers)
-
-    print("loading val data...")
-    val_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict,
-                                       cfg.val.triples_path, cfg.val.image_dir,
-                                       mode="eval", preload=False)
-    val_loader = DataLoader(train_set, batch_size=cfg.val.batch_size,
-                            shuffle=True, num_workers=args.n_workers)
 
     print("training started...")
     train(word_emb, vision_model, language_model, loss_model,
