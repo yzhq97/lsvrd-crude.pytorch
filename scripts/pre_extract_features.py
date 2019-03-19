@@ -60,7 +60,7 @@ class WriterThread(threading.Thread):
 
 if __name__ == "__main__":
 
-    config = "configs/lsvrd-resnet101-512.json"
+    config = "configs/lsvrd-vgg19-512.json"
     batch_size = 64
 
     cfg = edict(json.load(open(config)))
