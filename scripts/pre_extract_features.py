@@ -6,13 +6,13 @@ import math
 import torch
 import threading
 import numpy as np
-from tqdm import trange
+from tqdm import tqdm
 from easydict import EasyDict as edict
 from lib.module.backbone import backbones
 from lib.data.h5io import H5DataWriter
 
-mean = np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
-std = np.array([0.229, 0.224, 0.224]).reshape(3, 1, 1)
+mean = np.array([0.485, 0.456, 0.406]).reshape([3, 1, 1])
+std = np.array([0.229, 0.224, 0.224]).reshape([3, 1, 1])
 
 def load_image(image_dir, file):
     image_path = os.path.join(image_dir, file)
@@ -61,7 +61,7 @@ class WriterThread(threading.Thread):
 if __name__ == "__main__":
 
     config = "configs/lsvrd-resnet101-512.json"
-    batch_size = 48
+    batch_size = 64
 
     cfg = edict(json.load(open(config)))
     vcfg = cfg.vision_model
@@ -86,6 +86,7 @@ if __name__ == "__main__":
 
     print("pre-extracting features with %s ..." % vcfg.backbone)
     n_batches = int(math.ceil(len(files)/batch_size))
+    pbar = tqdm(total=n_batches*batch_size)
 
     batch_images = []
     loader = LoaderThread(files[:batch_size], vcfg.image_height, vcfg.image_width, batch_images)
@@ -93,7 +94,7 @@ if __name__ == "__main__":
 
     writer = None
 
-    for b in trange(n_batches):
+    for b in range(n_batches):
 
         loader.join()
         images = np.concatenate(batch_images, axis=0)
@@ -110,5 +111,8 @@ if __name__ == "__main__":
         writer = WriterThread(h5_writer, features, files[b*batch_size: (b+1)*batch_size])
         writer.start()
 
+        pbar.update(batch_size)
+
+    pbar.close()
     writer.join()
     h5_writer.close()
