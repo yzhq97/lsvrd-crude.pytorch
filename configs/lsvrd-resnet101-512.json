@@ -7,6 +7,8 @@
     "image_height": 448,
     "image_width":448,
     "backbone": "resnet101",
+    "feature_height": 14,
+    "feature_width": 14,
     "feature_dim": 2048,
     "pre_extract": true,
     "image_dir": "data/gqa/images",

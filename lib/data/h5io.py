@@ -119,7 +119,6 @@ class H5DataWriter:
         return block_idx, ins_idx
 
     def put(self, id, data, idx=-1):
-        id = int(id)
         if idx < 0:
             idx = self.current_idx
             self.ids.append(id)

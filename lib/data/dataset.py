@@ -13,6 +13,7 @@ from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
 from lib.data.sym_dict import SymbolDictionary
 from lib.module.backbone import backbones
+from lib.data.h5io import H5DataLoader, H5DataWriter
 
 
 def get_pos_mat(labels):
@@ -33,8 +34,8 @@ def box_convert_and_normalize(box, width, height):
 
 class GQATriplesDataset(Dataset):
 
-    resnet_mean = np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
-    resnet_std = np.array([0.229, 0.224, 0.224]).reshape(3, 1, 1)
+    mean = np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
+    std = np.array([0.229, 0.224, 0.224]).reshape(3, 1, 1)
 
     train = 0
     eval = 1
@@ -43,7 +44,8 @@ class GQATriplesDataset(Dataset):
                  word_dict, ent_dict, pred_dict, tokens_length,
                  image_dir, image_width, image_height,
                  mode, preload,
-                 pre_extract=False, cache_dir=None, backbone=None, feature_dim=None):
+                 pre_extract=False, cache_dir=None, backbone=None,
+                 feature_height=None, feature_width=None, feature_dim=None):
         """
         :param name: dataset name
         :param entries: (subject, object, predicate ) entries. see scripts/generate_balanced_triples.py for details
@@ -53,7 +55,7 @@ class GQATriplesDataset(Dataset):
         :param image_dir: folder containing all gqa images
         :param cache_dir: folder containing extracted features
         :param mode: "train" or "eval"
-        :param preload: whether or not to extract all feature maps prior to training
+        :param pre_extract: whether or not to extract all feature maps prior to training
         :param preload: whether or not to load all images into memory for faster data loading
         """
 
@@ -77,10 +79,17 @@ class GQATriplesDataset(Dataset):
         self.backbone = backbone
         self.feature_dim = feature_dim
 
-        if self.pre_extract: self.pre_extract_features()
+        self.pre_extract = pre_extract
+        if pre_extract:
+            fields = [ { "name": "features",
+                         "shape": [ feature_dim, feature_height, feature_width ],
+                         "dtype": "float32",
+                         "preload": preload
+                         } ]
+            self.h5_loader = H5DataLoader.load_from_directory(self.cache_dir, fields)
 
         self.preload = preload
-        self.images = self.preload_images() if preload else None
+        self.images = self.preload_images() if not pre_extract and preload else None
 
     def __len__(self):
 
@@ -91,8 +100,9 @@ class GQATriplesDataset(Dataset):
         entry = self.entries[idx]
         image_id = entry.image_id
 
-        if self.preload: image = self.images[idx]
-        else: image = self.preprocess_image(self.load_image(image_id, extracted=self.pre_extract))
+        if self.pre_extract: image = self.h5_loader[image_id]
+        elif self.preload: image = self.images[idx]
+        else: image = self.preprocess_image(self.load_image(image_id))
 
         ret = [ image, entry.sbj_box, entry.obj_box, entry.pred_box ]
 
@@ -105,15 +115,11 @@ class GQATriplesDataset(Dataset):
 
         return ret
 
-    def load_image(self, image_id, extracted=False):
+    def load_image(self, image_id):
 
-        if extracted:
-            image_path = os.path.join(self.cache_dir, "%s.npy" % image_id)
-            image = np.load(image_path)
-        else:
-            image_path = os.path.join(self.image_dir, "%s.jpg" % image_id)
-            image = cv2.imread(image_path)
-            if image is None: raise Exception("image %s does not exist" % image_path)
+        image_path = os.path.join(self.image_dir, "%s.jpg" % image_id)
+        image = cv2.imread(image_path)
+        if image is None: raise Exception("image %s does not exist" % image_path)
         return image
 
     def tokenize(self, text):
@@ -131,7 +137,7 @@ class GQATriplesDataset(Dataset):
         image = cv2.resize(image, (self.image_width, self.image_height)) # unify size
         image = image.transpose([2, 0, 1]) # HWC to CHW
         image = image.astype(np.float32) # convert to float
-        image = (image / 255.0 - self.resnet_mean) / self.resnet_std # normalize
+        image = (image / 255.0 - self.mean) / self.std # normalize
 
         return image
 
@@ -178,45 +184,6 @@ class GQATriplesDataset(Dataset):
 
         return new_entries
 
-    def pre_extract_features(self):
-
-        print("pre-extracting features with %s ..." % self.backbone)
-        os.makedirs(self.cache_dir, exist_ok=True)
-        backbone_cls = backbones[self.backbone]
-        cnn = backbone_cls()
-        cnn.freeze()
-        cnn.cuda()
-
-        image_ids = []
-        batch_size = 16
-
-        for entry in self.entries:
-            image_id = entry.image_id
-            out_path = os.path.join(self.cache_dir, "%s.npy" % image_id)
-            if not os.path.exists(out_path):
-                image_ids.append(image_id)
-
-        pbar = tqdm(total=len(image_ids))
-        n_batches = int(math.ceil(len(image_ids)/batch_size))
-        for b in range(n_batches):
-
-            batch_ids = image_ids[b*batch_size: (b+1)*batch_size]
-            images = [ self.load_image(image_id) for image_id in batch_ids ]
-            images = [ self.preprocess_image(image) for image in images ]
-            images = [ np.expand_dims(image, axis=0) for image in images ]
-            images = np.concatenate(images, axis=0)
-            images = torch.from_numpy(images).float().cuda()
-            features = cnn(images)
-
-            for i, image_id in enumerate(batch_ids):
-                feature = features[i]
-                out_path = os.path.join(self.cache_dir, "%s.npy" % image_id)
-                np.save(out_path, feature)
-
-            pbar.update(len(batch_ids))
-
-        pbar.close()
-
     @classmethod
     def create(cls, cfg, word_dict, ent_dict, pred_dict, triples_path, mode, preload):
 
@@ -231,5 +198,7 @@ class GQATriplesDataset(Dataset):
                    cfg.vision_model.pre_extract,
                    cfg.vision_model.cache_dir,
                    cfg.vision_model.backbone,
+                   cfg.vision_model.feature_height,
+                   cfg.vision_model.feature_width,
                    cfg.vision_model.feature_dim,)
 
