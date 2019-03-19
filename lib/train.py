@@ -48,8 +48,8 @@ def train(vision_model, language_model, loss_model,
             rel_t_emb = language_model(rel_tokens)
 
             sbj_loss = loss_model(sbj_v_emb, sbj_t_emb)
-            obj_loss = loss_model(obj_v_emb, obj_t_emb)
-            rel_loss = loss_model(rel_v_emb, rel_t_emb)
+            obj_loss = loss_model(sbj_v_emb, obj_t_emb)
+            rel_loss = loss_model(sbj_v_emb, rel_t_emb)
 
             loss = sbj_loss + obj_loss + rel_loss
 

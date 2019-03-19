@@ -13,8 +13,6 @@ def create_glove_emb(sym_dict, glove_words, glove_emb):
         if sym in glove_words:
             glove_idx = glove_words.index(sym)
             w_emb[idx] = glove_emb[glove_idx]
-        elif sym == "<PAD>":
-            w_emb[idx] = np.zeros_like(glove_emb[0])
         else:
             glove_idx = glove_words.index('unknown')
             uninit.append(sym)
@@ -35,7 +33,6 @@ if __name__ == "__main__":
     # get dictionary
 
     word_dict = SymbolDictionary()
-    word_dict.add_sym("<PAD>")
     len_cnt = [0] * 8
 
     ent_dict = SymbolDictionary()

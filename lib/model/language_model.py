@@ -5,13 +5,15 @@ import numpy as np
 
 
 class WordEmbedding(nn.Module):
-    """
-    assumes padding index to be zero
+    """Word Embedding
+
+    The n_words-th dim is used for padding_idx, which agrees *implicitly*
+    with the definition in Dictionary.
     """
 
     def __init__(self, n_words, emb_dim, dropout):
         super(WordEmbedding, self).__init__()
-        self.emb = nn.Embedding(n_words, emb_dim, padding_idx=0)
+        self.emb = nn.Embedding(n_words+1, emb_dim, padding_idx=n_words)
         self.dropout = nn.Dropout(dropout)
         self.n_words = n_words
         self.emb_dim = emb_dim
@@ -52,12 +54,12 @@ class LanguageModel(nn.Module):
         self.emb_dim = emb_dim
         self.n_layers = n_layers
         self.rnn_type = rnn_type
-        self.ndirections = 1 + int(bidirectional)
+        self.n_directions = 1 + int(bidirectional)
 
     def init_hidden(self, batch):
         # just to get the type of tensor
         weight = next(self.parameters()).data
-        hid_shape = (self.n_layers * self.ndirections, batch, self.emb_dim)
+        hid_shape = (self.n_layers * self.n_directions, batch, self.emb_dim)
         if self.rnn_type == 'LSTM':
             return (Variable(weight.new(*hid_shape).zero_()),
                     Variable(weight.new(*hid_shape).zero_()))
@@ -71,11 +73,12 @@ class LanguageModel(nn.Module):
         hidden = self.init_hidden(batch)
         self.rnn.flatten_parameters()
         output, hidden = self.rnn(x, hidden)
-        if self.ndirections == 1:
+        if self.n_directions == 1:
             return output[:, -1]
-        forward_ = output[:, -1, :self.emb_dim]
-        backward = output[:, 0, self.emb_dim:]
-        return torch.cat((forward_, backward), dim=1)
+        else:
+            forward_ = output[:, -1, :self.emb_dim]
+            backward = output[:, 0, self.emb_dim:]
+            return torch.cat((forward_, backward), dim=1)
 
     def forward_all(self, x):
         # x: [batch, sequence]
@@ -90,5 +93,5 @@ class LanguageModel(nn.Module):
     def build_from_config(cls, cfg, word_dict):
         word_emb = WordEmbedding(len(word_dict), cfg.word_emb_dim, cfg.dropout)
         word_emb.init_embedding(cfg.word_emb_init)
-        if not cfg.finetune: word_emb.freeze()
+        word_emb.freeze()
         return cls(word_emb, cfg.emb_dim, cfg.n_layers, cfg.bidirectional, cfg.dropout, cfg.rnn_type)

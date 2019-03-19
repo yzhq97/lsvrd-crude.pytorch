@@ -99,7 +99,7 @@ class GQATriplesDataset(Dataset):
     def tokenize(self, text):
 
         tokens = self.word_dict.tokenize(text)[:self.tokens_length]
-        tokens = tokens + [ 0 ] * (self.tokens_length - len(tokens))
+        tokens = tokens + [ len(self.word_dict) ] * (self.tokens_length - len(tokens))
         return tokens
 
     def preprocess_image(self, image):

@@ -29,9 +29,13 @@ class VisionModel(nn.Module):
         boxes = torch.cat([sbj_boxes, obj_boxes, rel_boxes], dim=0)
         roi_features = self.roi_align(feature_maps, boxes, box_ind) # [ N, C, crop_size, crop_size ]
 
-        sbj_emb, sbj_inter = self.entity_net(roi_features[:N])
-        obj_emb, obj_inter = self.entity_net(roi_features[N:2*N])
-        rel_emb = self.relation_net(roi_features[2*N:], sbj_emb, sbj_inter, obj_emb, obj_inter)
+        sbj_features = roi_features[:N]
+        obj_features = roi_features[N:2*N]
+        rel_features = roi_features[2*N:]
+
+        sbj_emb, sbj_inter = self.entity_net(sbj_features)
+        obj_emb, obj_inter = self.entity_net(obj_features)
+        rel_emb = self.relation_net(rel_features, sbj_emb, sbj_inter, obj_emb, obj_inter)
 
         return sbj_emb, obj_emb, rel_emb
 
