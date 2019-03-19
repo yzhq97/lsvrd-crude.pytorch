@@ -8,6 +8,9 @@ class ResNet (nn.Module):
         super(ResNet, self).__init__()
 
         cnn = torchvision.models.resnet101(pretrained=True)
+        self.cnn = cnn
+        self.features = nn.Sequential(cnn.conv1, cnn.bn1, cnn.relu, cnn.maxpool,
+                                      cnn.layer1, cnn.layer2, cnn.layer3, cnn.layer4)
         self.conv1 = cnn.conv1
         self.bn1 = cnn.bn1,
         self.relu = cnn.relu
@@ -22,15 +25,7 @@ class ResNet (nn.Module):
         """
         :param x: [ B, C, H, W ]
         """
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        x = self.features(x)
 
         return x
 
@@ -58,20 +53,20 @@ class VGGNet (nn.Module):
 
         super(VGGNet, self).__init__()
 
-        cnn = torchvision.models.vgg19(pretrained=True)
-        self.features = cnn.features
+        self.cnn = torchvision.models.vgg19(pretrained=True)
+        self.features = self.cnn.features
 
         self.layers_dict = {}
         block_idx = 1
         conv_dix = 1
-        for layer in self.features:
+        for i, layer in enumerate(self.features):
             if isinstance(layer, nn.Conv2d):
-                self.layers_dict["conv%d_%d" % (block_idx, conv_dix)] = layer
+                self.layers_dict["conv%d_%d" % (block_idx, conv_dix)] = i
                 conv_dix += 1
             elif isinstance(layer, nn.ReLU):
-                self.layers_dict["relu%d_%d" % (block_idx, conv_dix)] = layer
+                self.layers_dict["relu%d_%d" % (block_idx, conv_dix)] = i
             elif isinstance(layer, nn.MaxPool2d):
-                self.layers_dict["pool%d" % block_idx] = layer
+                self.layers_dict["pool%d" % block_idx] = i
                 block_idx += 1
                 conv_dix = 1
 
@@ -89,7 +84,7 @@ class VGGNet (nn.Module):
                 param.requires_grad = False
         else:
             layer = self.layers_dict[layer]
-            for param in layer.parameters():
+            for param in self.features[layer].parameters():
                 param.requires_grad = False
 
     def defreeze(self, layer="all"):
@@ -98,7 +93,7 @@ class VGGNet (nn.Module):
                 param.requires_grad = True
         else:
             layer = self.layers_dict[layer]
-            for param in layer.parameters():
+            for param in self.features[layer].parameters():
                 param.requires_grad = True
 
 backbones = {

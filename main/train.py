@@ -15,14 +15,13 @@ from torch.utils.data import DataLoader
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='configs/lsvrd-vgg-512.json')
+    parser.add_argument('--config', type=str, default='configs/lsvrd-vgg19-512.json')
     parser.add_argument('--n_epochs', type=int, default=10)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)
     parser.add_argument('--val_freq', type=int, default=1, help="run validation between how many epochs")
     parser.add_argument('--out_dir', type=str, default='out')
     args = parser.parse_args()
-    assert torch.cuda.device_count() >= args.n_gpus
     return args
 
 if __name__ == "__main__":
@@ -63,9 +62,9 @@ if __name__ == "__main__":
                             shuffle=True, num_workers=args.n_workers)
 
     print("building model")
-    vision_model = VisionModel.build_from_config(cfg.vision_model)
-    language_model = LanguageModel.build_from_config(cfg.language_model, word_dict)
-    loss_model = LossModel.build_from_config(cfg.loss_model)
+    vision_model = VisionModel.build_from_config(cfg.vision_model).cuda()
+    language_model = LanguageModel.build_from_config(cfg.language_model, word_dict).cuda()
+    loss_model = LossModel.build_from_config(cfg.loss_model).cuda()
 
     print("training started...")
     train(vision_model, language_model, loss_model,

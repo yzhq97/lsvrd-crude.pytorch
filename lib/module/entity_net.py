@@ -4,13 +4,14 @@ class EntityNet (nn.Module):
 
     def __init__(self, in_dim, crop_size, emb_dim):
         super(EntityNet, self).__init__()
+        assert crop_size == 7
 
         self.block1 = nn.Sequential(
-            nn.Linear(crop_size * crop_size * in_dim, emb_dim),
-            nn.BatchNorm1d(emb_dim),
+            nn.Conv2d(in_dim, int(emb_dim / 2), kernel_size=3, stride=1),
+            nn.BatchNorm2d(int(emb_dim / 2)),
             nn.ReLU(),
-            nn.Linear(emb_dim, emb_dim),
-            nn.BatchNorm1d(emb_dim),
+            nn.Conv2d(int(emb_dim / 2), emb_dim, 3),
+            nn.BatchNorm2d(emb_dim),
             nn.ReLU(),
         )
 
@@ -24,8 +25,8 @@ class EntityNet (nn.Module):
         :param x: [ B, C, aligned_h, aligned_w ]
         """
         B, C, H, W = x.size()
-        x = x.view(B, -1)
         intermediate = self.block1(x)
+        intermediate.squeeze_()
         x = self.block2(intermediate)
         return x, intermediate
 

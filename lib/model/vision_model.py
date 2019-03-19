@@ -50,5 +50,10 @@ class VisionModel(nn.Module):
         entity_net = EntityNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
         relation_net = EntityNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
 
-        return cls(backbone, roi_align, entity_net, entity_net, relation_net)
+        model = cls(backbone, roi_align, entity_net, entity_net, relation_net)
+
+        # for child in model.children():
+        #     print(child)
+
+        return model
 
