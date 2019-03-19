@@ -188,7 +188,7 @@ class GQATriplesDataset(Dataset):
         cnn.cuda()
 
         image_ids = []
-        batch_size = 8
+        batch_size = 16
 
         for entry in self.entries:
             image_id = entry.image_id
