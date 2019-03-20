@@ -73,8 +73,8 @@ def accuracy(vision_model, loader, ent_embs, pred_embs, k=3):
     ent_matches = torch.cat(ent_matches, 0)
     rel_matches = torch.cat(rel_matches, 0)
 
-    ent_acc = ent_matches.mean().item()
-    rel_acc = rel_matches.mean().item()
+    ent_acc = ent_matches.float().mean().item()
+    rel_acc = rel_matches.float().mean().item()
 
     return ent_acc, rel_acc
 
