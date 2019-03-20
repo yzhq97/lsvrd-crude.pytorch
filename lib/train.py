@@ -22,6 +22,17 @@ def train(word_emb, vision_model, language_model, loss_model,
 
     for epoch in range(n_epochs):
 
+        vision_model.train(False)
+        vision_model.eval()
+        language_model.train(False)
+        language_model.eval()
+        ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader, word_dict, ent_dict, pred_dict,
+                                    cfg)
+        logstr = "ent_acc: %.3f rel_acc: %.3f" % (ent_acc, rel_acc)
+        print("%-80s" % logstr)
+        vision_model.train(True)
+        language_model.train(True)
+
         scheduler.step()
         epoch_loss = 0.0
         tic_0 = time.time()
@@ -74,9 +85,13 @@ def train(word_emb, vision_model, language_model, loss_model,
 
         if (epoch + 1) % val_freq == 0:
             vision_model.train(False)
+            vision_model.eval()
             language_model.train(False)
-            ent_acc, rel_acc = validate(vision_model, language_model, val_loader, word_dict, ent_dict, pred_dict, cfg)
+            language_model.eval()
+            ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader, word_dict, ent_dict, pred_dict, cfg)
             logstr += " ent_acc: %.3f rel_acc: %.3f" % (ent_acc, rel_acc)
+            vision_model.train(True)
+            language_model.train(True)
 
         print("%-80s" % logstr)
         logger.write("%-80s" % logstr)
@@ -87,11 +102,11 @@ def train(word_emb, vision_model, language_model, loss_model,
         torch.save(language_model.state_dict(), language_model_path)
 
 
-def validate(vision_model, language_model, loader,
+def validate(word_emb, vision_model, language_model, loader,
              word_dict, ent_dict, pred_dict, cfg):
 
-    ent_embs = get_sym_emb(language_model, word_dict, ent_dict, cfg.language_model.tokens_length)
-    pred_embs = get_sym_emb(language_model, word_dict, pred_dict, cfg.language_model.tokens_length)
+    ent_embs = get_sym_emb(word_emb, language_model, word_dict, ent_dict, cfg.language_model.tokens_length)
+    pred_embs = get_sym_emb(word_emb, language_model, word_dict, pred_dict, cfg.language_model.tokens_length)
 
     ent_acc, rel_acc = accuracy(vision_model, loader, ent_embs, pred_embs)
 

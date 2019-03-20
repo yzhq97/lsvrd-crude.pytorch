@@ -34,8 +34,8 @@ def box_convert_and_normalize(box, width, height):
 
 class GQATriplesDataset(Dataset):
 
-    mean = np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
-    std = np.array([0.229, 0.224, 0.224]).reshape(3, 1, 1)
+    mean = np.array([0.485, 0.456, 0.406]).reshape([3, 1, 1])
+    std = np.array([0.229, 0.224, 0.224]).reshape([3, 1, 1])
 
     train = 0
     eval = 1
