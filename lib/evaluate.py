@@ -52,8 +52,6 @@ def accuracy(vision_model, loader, ent_embs, pred_embs, k=3):
 
         print("evaluating batch %4d/%4d" % (i+1, n_batches), end="\r")
 
-        data = [item.cuda() for item in data]
-
         images = data[1].float().cuda()
         sbj_boxes = data[2].float().cuda()
         obj_boxes = data[3].float().cuda()
