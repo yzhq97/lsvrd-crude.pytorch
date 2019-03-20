@@ -34,6 +34,8 @@ def topk_match(k, x_emb, label_emb, x_labels, similarity):
 
     s = similarity(x_emb, label_emb) # [ N, n_labels ]
     _, top_predictions = s.topk(k, largest=True, sorted=False)
+    print(x_labels.size())
+    print(top_predictions.size())
     matches = torch.eq(x_labels, top_predictions)
     matches, _ = matches.max(dim=1)
 
