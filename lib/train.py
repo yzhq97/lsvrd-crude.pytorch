@@ -61,8 +61,8 @@ def train(word_emb, vision_model, language_model, loss_model,
 
             epoch_loss += loss.data.item() * train_loader.batch_size
 
-            logstr = "epoch %2d batch %4d/%d4 %4.2fs | ^ %4dms | => %4dms | <= %4dms" % \
-                     (epoch+1, i+1, n_batches, tic_4-tic_0, 1000*(tic_2-tic_0), 1000*(tic_3-tic_2), 1000*(tic_4-tic_3))
+            logstr = "epoch %2d batch %4d/%d4 %4dms | ^ %4dms | => %4dms | <= %4dms" % \
+                     (epoch+1, i+1, n_batches, 1000*(tic_4-tic_0), 1000*(tic_2-tic_0), 1000*(tic_3-tic_2), 1000*(tic_4-tic_3))
             print("%-80s" % logstr, end="\r")
 
             tic_0 = time.time()
