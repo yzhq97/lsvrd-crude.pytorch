@@ -12,7 +12,7 @@
     "feature_dim": 512,
     "pre_extract": true,
     "image_dir": "data/gqa/images",
-    "cache_dir": "data/gqa/gqa_resnet101",
+    "cache_dir": "data/gqa/vgg19",
     "emb_dim": 512,
     "crop_size": 7
   },

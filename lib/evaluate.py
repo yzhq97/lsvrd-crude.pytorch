@@ -33,8 +33,8 @@ def get_sym_emb(word_emb, language_model, word_dict, sym_dict, tokens_length, ba
 def topk_match(k, x_emb, label_emb, x_labels, similarity):
 
     s = similarity(x_emb, label_emb) # [ N, n_labels ]
-    _, top_labels = s.topk(k, largest=True, sorted=False)
-    matches = torch.eq(x_labels, top_labels)
+    _, top_predictions = s.topk(k, largest=True, sorted=False)
+    matches = torch.eq(x_labels, top_predictions)
     matches, _ = matches.max(dim=1)
 
     return matches
