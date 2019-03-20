@@ -41,6 +41,6 @@
   "val": {
     "batch_size": 16,
     "triples_path": "cache/val_balanced_triples_use_none_label.pkl",
-    "prelaod": false
+    "preload": false
   }
 }
