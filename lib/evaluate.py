@@ -34,8 +34,6 @@ def topk_match(k, x_emb, label_emb, x_labels, similarity):
 
     s = similarity(x_emb, label_emb) # [ N, n_labels ]
     _, top_predictions = s.topk(k, largest=True, sorted=False)
-    print(x_labels.size())
-    print(top_predictions.size())
     matches = torch.eq(x_labels, top_predictions)
     matches, _ = matches.max(dim=1)
 
@@ -61,6 +59,8 @@ def accuracy(vision_model, loader, ent_embs, pred_embs, k=3):
         sbj_labels = data[5].cuda()
         obj_labels = data[6].cuda()
         rel_labels = data[7].cuda()
+
+        print(sbj_labels.size())
 
         sbj_embs, obj_embs, rel_embs = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 
