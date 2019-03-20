@@ -76,7 +76,8 @@ def train(word_emb, vision_model, language_model, loss_model,
             vision_model.eval()
             language_model.train(False)
             language_model.eval()
-            ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader, word_dict, ent_dict, pred_dict, cfg)
+            ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader,
+                                        word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length)
             logstr += " ent_acc: %.3f rel_acc: %.3f" % (ent_acc, rel_acc)
             vision_model.train(True)
             language_model.train(True)
