@@ -21,17 +21,6 @@ def train(word_emb, vision_model, language_model, loss_model,
 
     for epoch in range(n_epochs):
 
-        vision_model.train(False)
-        vision_model.eval()
-        language_model.train(False)
-        language_model.eval()
-        ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader,
-                                    word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length)
-        logstr = "ent_acc: %.3f rel_acc: %.3f" % (ent_acc, rel_acc)
-        print("%-80s" % logstr)
-        vision_model.train(True)
-        language_model.train(True)
-
         scheduler.step()
         epoch_loss = 0.0
         tic_0 = time.time()
@@ -72,8 +61,8 @@ def train(word_emb, vision_model, language_model, loss_model,
 
             epoch_loss += loss.data.item() * train_loader.batch_size
 
-            logstr = "epoch %2d batch %4d/%d4 | ^ %4dms | => %4dms | <= %4dms" % \
-                     (epoch+1, i+1, n_batches, 1000*(tic_2-tic_0), 1000*(tic_3-tic_2), 1000*(tic_4-tic_3))
+            logstr = "epoch %2d batch %4d/%d4 %4.2fs | ^ %4dms | => %4dms | <= %4dms" % \
+                     (epoch+1, i+1, n_batches, tic_4-tic_0, 1000*(tic_2-tic_0), 1000*(tic_3-tic_2), 1000*(tic_4-tic_3))
             print("%-80s" % logstr, end="\r")
 
             tic_0 = time.time()
