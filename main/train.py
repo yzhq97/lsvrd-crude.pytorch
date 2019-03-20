@@ -56,7 +56,7 @@ if __name__ == "__main__":
     print("loading val data...")
     val_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict, cfg.val.triples_path,
                                        mode="eval", preload=cfg.val.preload)
-    val_loader = DataLoader(train_set, batch_size=cfg.val.batch_size,
+    val_loader = DataLoader(val_set, batch_size=cfg.val.batch_size,
                             shuffle=True, num_workers=args.n_workers)
 
     print("building model")

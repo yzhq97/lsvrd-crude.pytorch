@@ -7,8 +7,7 @@ from lib.utils import Logger
 from lib.evaluate import get_sym_emb, accuracy
 
 def train(word_emb, vision_model, language_model, loss_model,
-          train_loader, val_loader,
-          word_dict, ent_dict, pred_dict,
+          train_loader, val_loader, word_dict, ent_dict, pred_dict,
           n_epochs, val_freq, out_dir, cfg):
 
     os.makedirs(out_dir, exist_ok=True)
@@ -26,8 +25,8 @@ def train(word_emb, vision_model, language_model, loss_model,
         vision_model.eval()
         language_model.train(False)
         language_model.eval()
-        ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader, word_dict, ent_dict, pred_dict,
-                                    cfg)
+        ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader,
+                                    word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length)
         logstr = "ent_acc: %.3f rel_acc: %.3f" % (ent_acc, rel_acc)
         print("%-80s" % logstr)
         vision_model.train(True)
@@ -103,10 +102,10 @@ def train(word_emb, vision_model, language_model, loss_model,
 
 
 def validate(word_emb, vision_model, language_model, loader,
-             word_dict, ent_dict, pred_dict, cfg):
+             word_dict, ent_dict, pred_dict, tokens_length):
 
-    ent_embs = get_sym_emb(word_emb, language_model, word_dict, ent_dict, cfg.language_model.tokens_length)
-    pred_embs = get_sym_emb(word_emb, language_model, word_dict, pred_dict, cfg.language_model.tokens_length)
+    ent_embs = get_sym_emb(word_emb, language_model, word_dict, ent_dict, tokens_length)
+    pred_embs = get_sym_emb(word_emb, language_model, word_dict, pred_dict, tokens_length)
 
     ent_acc, rel_acc = accuracy(vision_model, loader, ent_embs, pred_embs)
 

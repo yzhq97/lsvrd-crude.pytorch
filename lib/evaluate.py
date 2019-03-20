@@ -60,8 +60,6 @@ def accuracy(vision_model, loader, ent_embs, pred_embs, k=3):
         obj_labels = data[6].cuda()
         rel_labels = data[7].cuda()
 
-        print(sbj_labels.size())
-
         sbj_embs, obj_embs, rel_embs = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 
         batch_sbj_matches = topk_match(k, sbj_embs, ent_embs, sbj_labels, similarity)
