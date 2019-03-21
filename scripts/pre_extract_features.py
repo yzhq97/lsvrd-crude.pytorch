@@ -61,7 +61,7 @@ class WriterThread(threading.Thread):
 if __name__ == "__main__":
 
     config = "configs/lsvrd-vgg19-512.json"
-    batch_size = 64
+    batch_size = 32
 
     cfg = edict(json.load(open(config)))
     vcfg = cfg.vision_model

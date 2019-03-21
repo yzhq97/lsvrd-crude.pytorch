@@ -1,14 +1,16 @@
 import os
+import cv2
 import time
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-from lib.utils import Logger, plot_grad_flow
+import matplotlib.pyplot as plt
+from lib.utils import Logger, TFBLogger, plot_grad_flow
 from lib.evaluate import get_sym_emb, accuracy
 
 def train(word_emb, vision_model, language_model, loss_model,
           train_loader, val_loader, word_dict, ent_dict, pred_dict,
-          n_epochs, val_freq, out_dir, cfg):
+          n_epochs, val_freq, out_dir, cfg, grad_freq=0):
 
     os.makedirs(out_dir, exist_ok=True)
     params = list(vision_model.parameters()) + list(language_model.parameters())
@@ -18,6 +20,7 @@ def train(word_emb, vision_model, language_model, loss_model,
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1,
                                                 gamma=cfg.train.learning_rate_decay)
     logger = Logger(os.path.join(out_dir, "log.txt"))
+    if grad_freq > 0: plt.ion()
     n_batches = len(train_loader)
 
     for epoch in range(n_epochs):
@@ -53,8 +56,8 @@ def train(word_emb, vision_model, language_model, loss_model,
             sbj_v_emb, obj_v_emb, rel_v_emb = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 
             sbj_loss = loss_model(sbj_v_emb, sbj_t_emb)
-            obj_loss = loss_model(sbj_v_emb, obj_t_emb)
-            rel_loss = loss_model(sbj_v_emb, rel_t_emb)
+            obj_loss = loss_model(obj_v_emb, obj_t_emb)
+            rel_loss = loss_model(rel_v_emb, rel_t_emb)
 
             loss = sbj_loss + obj_loss + rel_loss
 
@@ -65,8 +68,11 @@ def train(word_emb, vision_model, language_model, loss_model,
 
             tic_4 = time.time()
 
-            if i % 100 == 0:
-                plot_grad_flow(named_params)
+            if grad_freq > 0 and i % grad_freq == 0:
+                plot_grad_flow(named_params, plt, epoch+1, i)
+                plt.draw()
+                plt.pause(0.0001)
+                plt.clf()
 
             epoch_loss += loss.data.item() * train_loader.batch_size
 
@@ -83,9 +89,7 @@ def train(word_emb, vision_model, language_model, loss_model,
 
         if (epoch + 1) % val_freq == 0:
             vision_model.train(False)
-            vision_model.eval()
             language_model.train(False)
-            language_model.eval()
             ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader,
                                         word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length)
             logstr += " ent_acc: %.3f rel_acc: %.3f" % (ent_acc, rel_acc)

@@ -10,9 +10,9 @@
     "feature_height": 14,
     "feature_width": 14,
     "feature_dim": 2048,
-    "pre_extract": false,
+    "pre_extract": true,
     "image_dir": "data/gqa/images",
-    "cache_dir": "data/gqa/gqa_resnet101",
+    "cache_dir": "cache/gqa_resnet101",
     "emb_dim": 512,
     "crop_size": 7
   },
@@ -32,8 +32,8 @@
     "n_neg": 10
   },
   "train": {
-    "learning_rate": 0.001,
-    "learning_rate_decay": 0.1,
+    "learning_rate": 0.002,
+    "learning_rate_decay": 0.8,
     "batch_size": 20,
     "triples_path": "cache/train_balanced_triples_use_none_label.pkl",
     "preload": false

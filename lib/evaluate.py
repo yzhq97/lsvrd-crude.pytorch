@@ -42,7 +42,7 @@ def topk_match(k, x_emb, label_emb, x_labels, similarity):
     return matches
 
 
-def accuracy(vision_model, loader, ent_embs, pred_embs, k=3):
+def accuracy(vision_model, loader, ent_embs, pred_embs, k=5):
 
     n_batches = len(loader)
     similarity = PairwiseCosineSimilarity()

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class RelationNet (nn.Module):
 
@@ -7,27 +8,26 @@ class RelationNet (nn.Module):
         super(RelationNet, self).__init__()
         assert crop_size == 7
 
-        self.block1 = nn.Sequential(
-            nn.Conv2d(in_dim, int(emb_dim / 2), kernel_size=3, stride=2),
-            nn.BatchNorm2d(int(emb_dim / 2)),
+        self.l1 = nn.Sequential(
+            nn.Conv2d(in_dim, int(emb_dim/2), kernel_size=3, stride=2),
+            nn.BatchNorm2d(int(emb_dim/2)),
             nn.ReLU(),
-            nn.Conv2d(int(emb_dim / 2), emb_dim, 3),
-            nn.BatchNorm2d(emb_dim),
-            nn.ReLU(),
+            nn.Conv2d(int(emb_dim/2), emb_dim, 3),
+            nn.BatchNorm2d(emb_dim)
         )
 
-        self.block2 = nn.Sequential(
+        self.l2 = nn.Sequential(
             nn.Linear(3 * emb_dim, emb_dim),
             nn.BatchNorm1d(emb_dim),
+            nn.ReLU()
         )
 
-        self.block3 = nn.Sequential(
+        self.l3 = nn.Sequential(
             nn.Linear(3 * emb_dim, emb_dim),
             nn.BatchNorm1d(emb_dim),
             nn.ReLU(),
             nn.Linear(emb_dim, emb_dim),
-            nn.BatchNorm1d(emb_dim),
-            nn.ReLU(),
+            nn.BatchNorm1d(emb_dim)
         )
 
     def forward(self, x, sbj_emb, sbj_inter, obj_emb, obj_inter):
@@ -35,12 +35,13 @@ class RelationNet (nn.Module):
         :param x: [ B, C, aligned_h, aligned_w ]
         """
         B, C, H, W = x.size()
-        x_1 = self.block1(x)
-        x_2 = x_1.squeeze()
-        x_3 = torch.cat([sbj_inter, x_2, obj_inter], dim=1)
-        x_4 = self.block2(x_3)
-        x_5 = torch.cat([sbj_emb, x_4, obj_emb], dim=1)
-        x_6 = self.block3(x_5)
+        intermediate = self.l1(x)
+        intermediate = intermediate.squeeze()
+        intermediate_relu = F.relu(intermediate)
+        x = torch.cat([sbj_inter, intermediate_relu, obj_inter], dim=1)
+        x = self.l2(x)
+        x = torch.cat([sbj_emb, x, obj_emb], dim=1)
+        x = intermediate + self.l3(x)
 
-        return x_6
+        return x
 

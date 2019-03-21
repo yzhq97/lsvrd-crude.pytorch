@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-from roi_align.roi_align import RoIAlign
+from torch.autograd import gradcheck
+from roi_align.crop_and_resize import CropAndResizeFunction
 from lib.module.backbone import backbones
 from lib.module.entity_net import EntityNet
 from lib.module.relation_net import RelationNet
@@ -12,25 +12,24 @@ class Identity(nn.Module):
         super(Identity, self).__init__()
 
     def forward(self, x):
-        return x
+        return x.detach()
 
     def freeze(self):
-        self.train(False)
-        self.eval()
+        pass
 
 class VisionModel(nn.Module):
 
     def __init__(self, backbone,
-                 roi_align: RoIAlign,
-                 entity_net: EntityNet,
-                 relation_net: RelationNet):
+                 crop_and_resize: CropAndResizeFunction,
+                 ent_net: EntityNet,
+                 rel_net: RelationNet):
 
         super(VisionModel, self).__init__()
 
         self.backbone = backbone
-        self.roi_align = roi_align
-        self.entity_net = entity_net
-        self.relation_net = relation_net
+        self.crop_and_resize = crop_and_resize
+        self.ent_net = ent_net
+        self.rel_net = rel_net
 
     def forward(self, images, sbj_boxes, obj_boxes, rel_boxes):
 
@@ -39,15 +38,17 @@ class VisionModel(nn.Module):
 
         box_ind = torch.arange(N, dtype=torch.int).repeat(3).cuda()
         boxes = torch.cat([sbj_boxes, obj_boxes, rel_boxes], dim=0)
-        roi_features = self.roi_align(feature_maps, boxes, box_ind) # [ N, C, crop_size, crop_size ]
+        roi_features = self.crop_and_resize(feature_maps, boxes, box_ind) # [ N, C, crop_size, crop_size ]
+
+        # gradcheck(self.crop_and_resize, (feature_maps, boxes, box_ind), raise_exception=True)
 
         sbj_features = roi_features[:N]
         obj_features = roi_features[N:2*N]
         rel_features = roi_features[2*N:]
 
-        sbj_emb, sbj_inter = self.entity_net(sbj_features)
-        obj_emb, obj_inter = self.entity_net(obj_features)
-        rel_emb = self.relation_net(rel_features, sbj_emb, sbj_inter, obj_emb, obj_inter)
+        sbj_emb, sbj_inter = self.ent_net(sbj_features)
+        obj_emb, obj_inter = self.ent_net(obj_features)
+        rel_emb = self.rel_net(rel_features, sbj_emb, sbj_inter, obj_emb, obj_inter)
 
         return sbj_emb, obj_emb, rel_emb
 
@@ -58,11 +59,11 @@ class VisionModel(nn.Module):
         backbone = backbone_cls()
         backbone.freeze()
 
-        roi_align = RoIAlign(cfg.crop_size, cfg.crop_size)
-        entity_net = EntityNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
-        relation_net = RelationNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
+        crop_and_resize = CropAndResizeFunction(cfg.crop_size, cfg.crop_size)
+        ent_net = EntityNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
+        rel_net = RelationNet(cfg.feature_dim, cfg.crop_size, cfg.emb_dim)
 
-        model = cls(backbone, roi_align, entity_net, relation_net)
+        model = cls(backbone, crop_and_resize, ent_net, rel_net)
 
         return model
 
