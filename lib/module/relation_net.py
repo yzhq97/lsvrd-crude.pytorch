@@ -35,12 +35,12 @@ class RelationNet (nn.Module):
         :param x: [ B, C, aligned_h, aligned_w ]
         """
         B, C, H, W = x.size()
-        x = self.block1(x)
-        x = x.squeeze()
-        x = torch.cat([sbj_inter, x, obj_inter], dim=1)
-        x = self.block2(x)
-        x = torch.cat([sbj_emb, x, obj_emb], dim=1)
-        x = self.block3(x)
+        x_1 = self.block1(x)
+        x_2 = x_1.squeeze()
+        x_3 = torch.cat([sbj_inter, x_2, obj_inter], dim=1)
+        x_4 = self.block2(x_3)
+        x_5 = torch.cat([sbj_emb, x_4, obj_emb], dim=1)
+        x_6 = self.block3(x_5)
 
-        return x
+        return x_6
 

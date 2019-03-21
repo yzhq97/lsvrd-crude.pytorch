@@ -145,6 +145,8 @@ def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, pred_use_prob, use_none_lab
 
 if __name__ == "__main__":
 
+    print("generating balanced triples ...")
+
     image_dir = "data/gqa/images"
     box_source = "gt"
     out_dir = "cache"
@@ -213,5 +215,6 @@ if __name__ == "__main__":
             out_name = "%s_balanced_triples.pkl" % split
         with open(os.path.join(out_dir, out_name), "wb") as f:
             pickle.dump(entries, f)
+            print("dumped to %s" % out_name)
 
-    print(triple_cnt)
+    print("triple count: %s" % str(triple_cnt))

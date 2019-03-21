@@ -33,7 +33,7 @@ class TripletLoss(nn.Module):
         pos_ind = p.nonzero()
         pos_s = s[pos_ind[:, 0], pos_ind[:, 1]].view([N, 1])
 
-        neg_ind = p.neg().add_(1).nonzero()
+        neg_ind = p.neg().add(1).nonzero()
         neg_s = s[neg_ind[:, 0], neg_ind[:, 1]].view([N, N-1])
 
         loss = neg_s - pos_s + self.margin # [ N, N-1 ]

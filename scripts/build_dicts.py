@@ -22,6 +22,8 @@ def create_glove_emb(sym_dict, glove_words, glove_emb):
 
 if __name__ == "__main__":
 
+    print("building dictionaries ... ")
+
     scence_graphs_dir = "data/gqa/scene_graphs"
     glove_txt_path = "data/glove/glove.6B.300d.txt"
     emb_dim = 300
@@ -43,7 +45,7 @@ if __name__ == "__main__":
     ent_cnt = {}
     pred_cnt = {}
 
-    print("running statistics ...")
+    print("    running statistics ...")
 
     for file in tqdm(files):
 
@@ -70,7 +72,7 @@ if __name__ == "__main__":
                     else:
                         pred_cnt[rel["name"]] = 1
 
-    print("adding symbols ...")
+    print("    adding symbols ...")
 
 
     for ent_name, cnt in tqdm(ent_cnt.items()):
@@ -88,14 +90,14 @@ if __name__ == "__main__":
     pred_dict.dump_to_file("cache/pred_dict.json")
 
     # get glove words
-    print("parsing glove words")
+    print("    parsing glove words")
     glove_words = []
     with open(glove_txt_path) as f:
         for line in tqdm(f.readlines()):
             elems = line.split(' ')
             word = elems[0]
             glove_words.append(word)
-    print("parsing glove embeddings")
+    print("    parsing glove embeddings")
     glove_emb = np.zeros([len(glove_words), emb_dim])
     with open(glove_txt_path) as f:
         for i, line in tqdm(enumerate(f.readlines())):
@@ -104,19 +106,19 @@ if __name__ == "__main__":
             vec = [float(_) for _ in vec]
             glove_emb[i] = vec
 
-    print("saving word embeddings...")
+    print("    saving word embeddings...")
     word_emb, uninit = create_glove_emb(word_dict, glove_words, glove_emb)
     np.save("cache/word_emb_init.npy", word_emb)
 
     print()
-    print("%d entity categories, %d predicates" % (len(ent_dict), len(pred_dict)))
+    print("    %d entity categories, %d predicates" % (len(ent_dict), len(pred_dict)))
 
     print()
-    print("%d words in word_dict" % len(word_dict))
-    print("uninitialized words (replaced with the embedding of 'unknown'):")
+    print("    %d words in word_dict" % len(word_dict))
+    print("    uninitialized words (replaced with the embedding of 'unknown'):")
     print(uninit)
 
     print()
-    print("token length count (by category):")
+    print("    token length count (by category):")
     for length, number in enumerate(len_cnt):
         print("%2d %d" % (length, number))

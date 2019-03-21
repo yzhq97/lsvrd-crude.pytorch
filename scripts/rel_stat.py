@@ -45,6 +45,8 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 
 if __name__ == "__main__":
 
+    print("running relation statistics ... ")
+
     n_pred_use = 311
     n_rel_max = 50000
 
@@ -100,7 +102,7 @@ if __name__ == "__main__":
 
     for i in range(len(pred_dict)):
         pred_id, cnt, portion, rel_use, rel_prob = rel_cnt[i]
-        print("%3d | %3d %20s %10d %.4f" % (i+1, pred_id, pred_dict.idx2sym[pred_id], cnt, 100 * portion))
+        print("    %3d | %3d %20s %10d %.4f" % (i+1, pred_id, pred_dict.idx2sym[pred_id], cnt, 100 * portion))
 
     pred_dict_use = SymbolDictionary()
     pred_use_prob = []
@@ -113,3 +115,4 @@ if __name__ == "__main__":
 
     with open(os.path.join(out_dir, "pred_use_prob_%d.json" % n_pred_use), "w") as f:
         json.dump(pred_use_prob, f)
+        print("use prob dumped to pred_use_prob_%d.jso" % n_pred_use)

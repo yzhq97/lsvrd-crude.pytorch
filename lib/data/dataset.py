@@ -108,6 +108,7 @@ class GQATriplesDataset(Dataset):
 
         if self.mode == self.train:
             ret.extend([entry.sbj_tokens, entry.obj_tokens, entry.pred_tokens])
+            ret.extend([entry.sbj_seq_len, entry.obj_seq_len, entry.pred_seq_len])
         else:
             ret.extend([entry.sbj_label, entry.obj_label, entry.pred_label])
 
@@ -125,8 +126,9 @@ class GQATriplesDataset(Dataset):
     def tokenize(self, text):
 
         tokens = self.word_dict.tokenize(text)[:self.tokens_length]
+        seq_len = len(tokens)
         tokens = tokens + [ len(self.word_dict) ] * (self.tokens_length - len(tokens))
-        return tokens
+        return tokens, seq_len
 
     def preprocess_image(self, image):
 
@@ -167,11 +169,11 @@ class GQATriplesDataset(Dataset):
             # tokenize text
             if self.mode == self.train:
                 sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
-                entry.sbj_tokens = self.tokenize(sbj_text)
+                entry.sbj_tokens, entry.sbj_seq_len = self.tokenize(sbj_text)
                 obj_text = self.ent_dict.idx2sym[entry.obj_label]
-                entry.obj_tokens = self.tokenize(obj_text)
+                entry.obj_tokens, entry.obj_seq_len = self.tokenize(obj_text)
                 pred_text = self.pred_dict.idx2sym[entry.pred_label]
-                entry.pred_tokens = self.tokenize(pred_text)
+                entry.pred_tokens, entry.pred_seq_len = self.tokenize(pred_text)
 
             # convert boxes
             entry.sbj_box = box_convert_and_normalize(entry.sbj_box, entry.width, entry.height)

@@ -10,8 +10,10 @@ from lib.module.similarity_model import PairwiseCosineSimilarity
 def get_sym_emb(word_emb, language_model, word_dict, sym_dict, tokens_length, batch_size=32):
 
     sym_tokens = [word_dict.tokenize(sym)[:tokens_length] for sym in sym_dict.idx2sym]
+    seq_lens = [len(tokens) for tokens in sym_tokens]
     sym_tokens = [tokens + [len(word_dict)] * (tokens_length - len(tokens)) for tokens in sym_tokens]
     sym_tokens = torch.tensor(sym_tokens)
+    seq_lens = torch.tensor(seq_lens).long()
 
     n_syms = len(sym_tokens)
     n_batches = int(math.ceil(1.0 * n_syms / batch_size))
@@ -19,10 +21,10 @@ def get_sym_emb(word_emb, language_model, word_dict, sym_dict, tokens_length, ba
     sym_embs = []
 
     for batch in range(n_batches):
-        batch_tokens = sym_tokens[batch * batch_size: (batch + 1) * batch_size]
-        batch_tokens = batch_tokens.cuda()
+        batch_tokens = sym_tokens[batch * batch_size: (batch + 1) * batch_size].cuda()
+        batch_seq_lens = seq_lens[batch * batch_size: (batch + 1) * batch_size].cuda()
         batch_w_embs = word_emb(batch_tokens)
-        batch_embs = language_model(batch_w_embs)
+        batch_embs = language_model(batch_w_embs, batch_seq_lens)
         sym_embs.append(batch_embs)
 
     sym_embs = torch.cat(sym_embs, 0)

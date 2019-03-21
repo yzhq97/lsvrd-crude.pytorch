@@ -15,7 +15,8 @@ class Identity(nn.Module):
         return x
 
     def freeze(self):
-        pass
+        self.train(False)
+        self.eval()
 
 class VisionModel(nn.Module):
 

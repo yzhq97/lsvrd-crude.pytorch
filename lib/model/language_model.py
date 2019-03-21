@@ -58,6 +58,8 @@ class LanguageModel(nn.Module):
             dropout=dropout,
             batch_first=True)
 
+        self.rnn.flatten_parameters()
+
         self.in_dim = in_dim
         self.hid_dim = hid_dim
         self.n_layers = n_layers
@@ -73,27 +75,29 @@ class LanguageModel(nn.Module):
         else:
             return torch.zeros(hid_shape, device=device)
 
-    def forward(self, x):
+    def forward(self, x, seq_len):
         # x: [batch, sequence, in_dim]
         batch = x.size(0)
         hidden = self.init_hidden(batch)
-        # self.rnn.flatten_parameters()
         output, hidden = self.rnn(x, hidden)
+        batch_inds = torch.arange(batch, dtype=seq_len.dtype, device=seq_len.device)
+        seq_inds = seq_len - 1
 
         if self.ndirections == 1:
-            return output[:, -1]
+            out =  output[batch_inds, seq_inds, :]
+            return out
 
-        forward_ = output[:, -1, :self.hid_dim]
+        forward_ = output[batch_inds, seq_inds, :self.hid_dim]
         backward = output[:, 0, self.hid_dim:]
         return torch.cat((forward_, backward), dim=1)
 
-    def forward_all(self, x):
-        # x: [batch, sequence, in_dim]
-        batch = x.size(0)
-        hidden = self.init_hidden(batch)
-        # self.rnn.flatten_parameters()
-        output, hidden = self.rnn(x, hidden)
-        return output
+    # def forward_all(self, x):
+    #     # x: [batch, sequence, in_dim]
+    #     batch = x.size(0)
+    #     hidden = self.init_hidden(batch)
+    #     # self.rnn.flatten_parameters()
+    #     output, hidden = self.rnn(x, hidden)
+    #     return output
 
     @classmethod
     def build_from_config(cls, cfg):

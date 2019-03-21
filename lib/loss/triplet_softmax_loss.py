@@ -39,8 +39,8 @@ class TripletSoftmaxLoss(nn.Module):
 
         neg_s, _ = neg_s.topk(k=self.n_neg, dim=1, sorted=False)
         neg_s = neg_s.sum(dim=1) # [ N ]
-        loss = torch.log(pos_s / (pos_s + neg_s))
-        loss = loss.mean().neg()
+        loss = torch.log(pos_s / (pos_s + neg_s)).neg()
+        loss = loss.mean()
 
         return loss
 

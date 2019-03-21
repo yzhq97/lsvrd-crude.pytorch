@@ -79,7 +79,6 @@ class SymbolDictionary:
 
     @classmethod
     def load_from_file(cls, path, style="gqa"):
-        print('loading sym_dict from %s' % path)
         sym_dict = json.load(open(path, 'r'))
         sym2idx = sym_dict["sym2idx"]
         idx2sym = sym_dict["idx2sym"]

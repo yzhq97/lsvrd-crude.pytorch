@@ -10,13 +10,14 @@ from lib.model.language_model import LanguageModel, WordEmbedding
 from lib.model.loss_model import LossModel
 from lib.data.sym_dict import SymbolDictionary
 from lib.data.dataset import GQATriplesDataset
+from lib.utils import count_parameters
 from easydict import EasyDict as edict
 from torch.utils.data import DataLoader
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='configs/lsvrd-vgg19-512.json')
-    parser.add_argument('--n_epochs', type=int, default=10)
+    parser.add_argument('--n_epochs', type=int, default=50)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)
     parser.add_argument('--val_freq', type=int, default=1, help="run validation between how many epochs")
@@ -66,6 +67,11 @@ if __name__ == "__main__":
     vision_model = VisionModel.build_from_config(cfg.vision_model).cuda()
     language_model = LanguageModel.build_from_config(cfg.language_model).cuda()
     loss_model = LossModel.build_from_config(cfg.loss_model).cuda()
+
+    n_v_params = count_parameters(vision_model)
+    n_l_params = count_parameters(language_model)
+    print("vision model: {:,} parameters".format(n_v_params))
+    print("language model: {:,} parameters".format(n_l_params))
 
     print("training started...")
     train(word_emb, vision_model, language_model, loss_model,
