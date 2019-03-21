@@ -16,7 +16,7 @@ def train(word_emb, vision_model, language_model, loss_model,
     params = list(vision_model.parameters()) + list(language_model.parameters())
     params = [ param for param in params if param.requires_grad ]
     named_params = list(vision_model.named_parameters()) + list(language_model.named_parameters())
-    optimizer = torch.optim.Adam(params, lr=cfg.train.learning_rate)
+    optimizer = torch.optim.Adam(params, lr=cfg.train.learning_rate, weight_decay=cfg.train.learning_rate)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1,
                                                 gamma=cfg.train.learning_rate_decay)
     logger = Logger(os.path.join(out_dir, "log.txt"))
