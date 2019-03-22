@@ -100,7 +100,7 @@ def train(word_emb, vision_model, language_model, loss_model,
             tfb_logger.scalar_summary("loss/total", loss.item(), step)
 
             tic_0 = time.time()
-            step += train_loader.step_size
+            step += train_loader.batch_size
 
         epoch_loss /= n_batches * train_loader.batch_size
 
