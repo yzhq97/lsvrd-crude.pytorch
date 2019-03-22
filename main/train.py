@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-gru-300d-1layer-64-32-0.2-5.0-1001-gt-311-100k.json')
+    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100k.json')
     parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)
@@ -24,13 +24,13 @@ def parse_args():
     parser.add_argument('--out_dir', type=str, default='out')
     parser.add_argument('--grad_freq', type=int, default=100)
     args = parser.parse_args()
-    return args
-
-def main(args):
     _, cfg_name = os.path.split(args.config)
     cfg_name, _ = os.path.splitext(cfg_name)
-    cfg = edict(json.load(open(args.config)))
-    out_dir = os.path.join(args.out_dir, cfg_name)
+    args.cfg_name = cfg_name
+    return args
+
+def train(args, cfg):
+    out_dir = os.path.join(args.out_dir, args.cfg_name)
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
@@ -82,6 +82,6 @@ def main(args):
           args.n_epochs, args.val_freq, out_dir, cfg, args.grad_freq)
 
 if __name__ == "__main__":
-
     args = parse_args()
-    main(args)
+    cfg = edict(json.load(open(args.config)))
+    train(args, cfg)

@@ -3,6 +3,8 @@
   "word_dict": "cache/word_dict.json",
   "ent_dict": "cache/ent_dict.json",
   "pred_dict": "cache/pred_dict_311.json",
+  "n_preds": 311,
+  "n_rel_max": 100000,
   "vision_model": {
     "image_height": 448,
     "image_width":448,
@@ -14,7 +16,8 @@
     "image_dir": "data/gqa/images",
     "cache_dir": "cache/gqa_vgg19_14x14",
     "emb_dim": 512,
-    "crop_size": 7
+    "ent_crop_size": 7,
+    "rel_crop_size": 7
   },
   "language_model": {
     "rnn_type": "GRU",
@@ -40,11 +43,13 @@
     "learning_rate_decay": 0.8,
     "batch_size": 64,
     "triples_path": "cache/train_triples_gt_boxes_use_none_311_max_100000.pkl",
+    "box_source": "gt",
     "preload": false
   },
   "val": {
     "batch_size": 64,
     "triples_path": "cache/val_triples_gt_boxes_use_none_311_max_100000.pkl",
+    "box_source": "gt",
     "preload": false
   }
 }
