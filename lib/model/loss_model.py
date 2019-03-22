@@ -10,7 +10,7 @@ class LossModel(nn.Module):
                  similarity: PairwiseCosineSimilarity,
                  triplet_loss: TripletLoss,
                  triplet_softmax_loss: TripletSoftmaxLoss,
-                 similarity_norm = 3.0):
+                 similarity_norm = 5.0):
 
         super(LossModel, self).__init__()
 
@@ -21,8 +21,8 @@ class LossModel(nn.Module):
 
     def forward(self, v_emb, l_emb):
 
-        s = self.similarity(v_emb, l_emb).mul(self.similarity_norm)
-        trsm_loss = self.triplet_softmax_loss(s) # Ly_trsm
+        s = self.similarity(v_emb, l_emb)
+        trsm_loss = self.triplet_softmax_loss(s.mul(self.similarity_norm)) # Ly_trsm
         tr_loss = self.triplet_loss(s.t())  # Lx_tr
         loss = tr_loss + trsm_loss
 

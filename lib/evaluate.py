@@ -3,6 +3,8 @@ import time
 import math
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
 from tqdm import tqdm
 from lib.utils import Logger
 from lib.module.similarity_model import PairwiseCosineSimilarity
@@ -32,23 +34,33 @@ def get_sym_emb(word_emb, language_model, word_dict, sym_dict, tokens_length, ba
     return sym_embs
 
 
-def topk_match(k, x_emb, label_emb, x_labels, similarity):
+def topk_predictions(k, x_emb, label_emb, similarity):
 
     s = similarity(x_emb, label_emb) # [ N, n_labels ]
-    _, top_predictions = s.topk(k, largest=True, sorted=False)
-    matches = torch.eq(x_labels.unsqueeze(1).repeat(1, k), top_predictions)
-    matches, _ = matches.max(dim=1)
+    score = F.softmax(s, dim=1)
+    _, top_predictions = score.topk(k, sorted=False)
 
+    return top_predictions
+
+def matches(predictions, labels):
+    labels = labels.unsqueeze(1).repeat(1, predictions.size(1))
+    matches = torch.eq(predictions, labels)
+    _, matches = matches.max(dim=1)
     return matches
 
 
-def accuracy(vision_model, loader, ent_embs, pred_embs, k=5):
+def accuracy(vision_model, loader, ent_t_embs, pred_embs, k_ent=50, k_rel=20):
 
     n_batches = len(loader)
     similarity = PairwiseCosineSimilarity()
 
     ent_matches = []
     rel_matches = []
+
+    n_ent_labels = ent_t_embs.size(0)
+    n_preds = pred_embs.size(0)
+    ent_bincounts = np.zeros([n_ent_labels], dtype=np.int32)
+    rel_bincounts = np.zeros([n_preds], dtype=np.int32)
 
     for i, data in enumerate(loader):
 
@@ -62,11 +74,19 @@ def accuracy(vision_model, loader, ent_embs, pred_embs, k=5):
         obj_labels = data[6].cuda()
         rel_labels = data[7].cuda()
 
-        sbj_embs, obj_embs, rel_embs = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
+        sbj_v_embs, obj_v_embs, rel_v_embs = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 
-        batch_sbj_matches = topk_match(k, sbj_embs, ent_embs, sbj_labels, similarity)
-        batch_obj_matches = topk_match(k, obj_embs, ent_embs, obj_labels, similarity)
-        batch_rel_matches = topk_match(k, rel_embs, pred_embs, rel_labels, similarity)
+        batch_sbj_predictions = topk_predictions(k_ent, sbj_v_embs, ent_t_embs, similarity)
+        batch_obj_predictions = topk_predictions(k_ent, obj_v_embs, ent_t_embs, similarity)
+        batch_rel_predictions = topk_predictions(k_rel, rel_v_embs, pred_embs, similarity)
+
+        ent_bincounts += np.bincount(batch_sbj_predictions.view(-1).cpu().numpy(), minlength=n_ent_labels)
+        ent_bincounts += np.bincount(batch_obj_predictions.view(-1).cpu().numpy(), minlength=n_ent_labels)
+        rel_bincounts += np.bincount(batch_rel_predictions.view(-1).cpu().numpy(), minlength=n_preds)
+
+        batch_sbj_matches = matches(batch_sbj_predictions, sbj_labels)
+        batch_obj_matches = matches(batch_obj_predictions, obj_labels)
+        batch_rel_matches = matches(batch_rel_predictions, rel_labels)
 
         ent_matches.append(batch_sbj_matches)
         ent_matches.append(batch_obj_matches)
@@ -78,5 +98,9 @@ def accuracy(vision_model, loader, ent_embs, pred_embs, k=5):
     ent_acc = ent_matches.float().mean().item()
     rel_acc = rel_matches.float().mean().item()
 
-    return ent_acc, rel_acc
+    ent_distribution_std = ent_bincounts.std().item()
+    rel_distribution_std = rel_bincounts.std().item()
+
+
+    return ent_acc, rel_acc, ent_distribution_std, rel_distribution_std
 

@@ -42,6 +42,5 @@ class RelationNet (nn.Module):
         x = self.l2(x)
         x = torch.cat([sbj_emb, x, obj_emb], dim=1)
         x = intermediate + self.l3(x)
-
         return x
 

@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='configs/lsvrd-vgg19-512.json')
-    parser.add_argument('--n_epochs', type=int, default=50)
+    parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)
     parser.add_argument('--val_freq', type=int, default=1, help="run validation between how many epochs")

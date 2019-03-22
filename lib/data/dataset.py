@@ -48,7 +48,7 @@ class GQATriplesDataset(Dataset):
                  feature_height=None, feature_width=None, feature_dim=None):
         """
         :param name: dataset name
-        :param entries: (subject, object, predicate ) entries. see scripts/generate_balanced_triples.py for details
+        :param entries: (subject, object, predicate ) entries. see scripts/generate_triples.py for details
         :param ent_dict: entity dictionary
         :param pred_dict: predicate dictionary
         :param word_dict: language word dictionary

@@ -27,6 +27,20 @@ def train(word_emb, vision_model, language_model, loss_model,
 
         scheduler.step()
         epoch_loss = 0.0
+
+        if epoch % val_freq == 0:
+            vision_model.train(False)
+            language_model.train(False)
+            ent_acc, rel_acc, ent_std, rel_std = validate(
+                word_emb, vision_model, language_model, val_loader,
+                word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length)
+            logstr = "epoch %2d | ent acc(top50): %.3f std: %.2f | rel acc(top20): %.3f std: %.2f" % (
+                epoch, ent_acc, ent_std, rel_acc, rel_std)
+            logger.write("%-80s" % logstr)
+            vision_model.train(True)
+            language_model.train(True)
+
+
         tic_0 = time.time()
 
         for i, data in enumerate(train_loader):
@@ -74,10 +88,10 @@ def train(word_emb, vision_model, language_model, loss_model,
                 plt.pause(0.0001)
                 plt.clf()
 
-            epoch_loss += loss.data.item() * train_loader.batch_size
+            epoch_loss += loss.item() * train_loader.batch_size
 
-            logstr = "epoch %2d batch %4d/%d4 | loss %5.2f | %4dms | ^ %4dms | => %4dms" % \
-                     (epoch+1, i+1, n_batches, loss.data.item(),
+            logstr = "epoch %2d batch %4d/%4d | loss %5.2f | %4dms | ^ %4dms | => %4dms" % \
+                     (epoch+1, i+1, n_batches, loss.item(),
                       1000*(tic_4-tic_0), 1000*(tic_2-tic_0), 1000*(tic_4-tic_2))
             print("%-80s" % logstr, end="\r")
 
@@ -86,17 +100,6 @@ def train(word_emb, vision_model, language_model, loss_model,
         epoch_loss /= n_batches * train_loader.batch_size
 
         logstr = "epoch %2d | train_loss: %5.2f" % (epoch+1, epoch_loss)
-
-        if (epoch + 1) % val_freq == 0:
-            vision_model.train(False)
-            language_model.train(False)
-            ent_acc, rel_acc = validate(word_emb, vision_model, language_model, val_loader,
-                                        word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length)
-            logstr += " ent_acc: %.3f rel_acc: %.3f" % (ent_acc, rel_acc)
-            vision_model.train(True)
-            language_model.train(True)
-
-        print("%-80s" % logstr)
         logger.write("%-80s" % logstr)
 
         vision_model_path = os.path.join(out_dir, "vision_model_%d.pth" % (epoch+1))
@@ -111,6 +114,4 @@ def validate(word_emb, vision_model, language_model, loader,
     ent_embs = get_sym_emb(word_emb, language_model, word_dict, ent_dict, tokens_length)
     pred_embs = get_sym_emb(word_emb, language_model, word_dict, pred_dict, tokens_length)
 
-    ent_acc, rel_acc = accuracy(vision_model, loader, ent_embs, pred_embs)
-
-    return ent_acc, rel_acc
+    return accuracy(vision_model, loader, ent_embs, pred_embs)

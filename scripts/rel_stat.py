@@ -48,7 +48,7 @@ if __name__ == "__main__":
     print("running relation statistics ... ")
 
     n_pred_use = 311
-    n_rel_max = 50000
+    n_rel_max = 100000
 
     ent_dict_path = "cache/ent_dict.json"
     pred_dict_path = "cache/pred_dict.json"
@@ -115,4 +115,4 @@ if __name__ == "__main__":
 
     with open(os.path.join(out_dir, "pred_use_prob_%d.json" % n_pred_use), "w") as f:
         json.dump(pred_use_prob, f)
-        print("use prob dumped to pred_use_prob_%d.jso" % n_pred_use)
+        print("use prob dumped to pred_use_prob_%d.json" % n_pred_use)

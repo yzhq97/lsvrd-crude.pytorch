@@ -2,6 +2,7 @@ import sys, os
 sys.path.insert(0, os.getcwd())
 import json
 import h5py
+import random
 import pickle
 import numpy as np
 from tqdm import tqdm, trange
@@ -56,7 +57,37 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 #     iou = intersection / union
 #     return iou
 
-def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, use_none_label):
+# def get_roidb_from_proposals(proposals, gt_boxes, ent_labels, rel_mat, threshold = 0.5):
+#
+#     iou_mat = compute_iou_mat(proposals, gt_boxes)
+#     max_idx = np.argmax(iou_mat, axis=1)
+#     max_iou = iou_mat[ np.arange(len(max_idx)), max_idx ]
+#
+#     pos_proposals = np.where(max_iou >= threshold)
+#     n_pos_props = len(pos_proposals)
+#     pos2gt = max_idx[pos_proposals]
+#
+#     sbj_boxes = []
+#     obj_boxes = []
+#     rlp_labels = []
+#
+#     for i in range(n_pos_props):
+#         for j in range(n_pos_props):
+#             if i != j and pos2gt[i] != pos2gt[j]:
+#                 sbj_gt = pos2gt[i]
+#                 obj_gt = pos2gt[j]
+#                 for pred_id in rel_mat[sbj_gt][obj_gt]:
+#                     sbj_boxes.append(proposals[i])
+#                     obj_boxes.append(proposals[j])
+#                     rlp_labels.append([ ent_labels[sbj_gt], pred_id, ent_labels[obj_gt] ])
+#
+#     sbj_boxes = np.concatenate(sbj_boxes, axis=0)
+#     obj_boxes = np.concatenate(obj_boxes, axis=0)
+#     rlp_labels = np.array(rlp_labels, dtype="int32")
+#
+#     return sbj_boxes, obj_boxes, rlp_labels
+
+def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, pred_use_prob, use_none_label):
 
     entries = []
 
@@ -65,6 +96,7 @@ def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, use_none_label):
         for j in range(n_ent):
             if i != j:
                 if use_none_label and len(rel_mat[i][j]) == 0:
+                    if random.random() > pred_use_prob[0]: continue
                     entry = {
                         "sbj_box": gt_boxes[i],
                         "sbj_label": ent_labels[i],
@@ -74,6 +106,7 @@ def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, use_none_label):
                     }
                     entries.append(entry)
                 for pred_id in rel_mat[i][j]:
+                    if random.random() > pred_use_prob[pred_id]: continue
                     entry = {
                         "sbj_box": gt_boxes[i],
                         "sbj_label": ent_labels[i],
@@ -112,14 +145,19 @@ def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, use_none_label):
 
 if __name__ == "__main__":
 
-    image_dir = "dataset/gqa/images"
+    print("generating triples ...")
+
+    image_dir = "data/gqa/images"
     box_source = "gt"
-    out_dir = "data/gqa/vrd"
+    out_dir = "cache"
 
-    ent_dict_path = "data/gqa/vrd/ent_dict.json"
-    pred_dict_path = "data/gqa/vrd/pred_dict_311.json"
+    ent_dict_path = "cache/ent_dict.json"
+    pred_dict_path = "cache/pred_dict_311.json"
+    pred_use_prob_path = "cache/pred_use_prob_311.json"
+    balanced = False
 
-    use_none_label = False
+    use_none_label = True
+    random.seed(999)
 
     scene_graphs_dir = "data/gqa/scene_graphs"
     scene_graph_files = [ "train_sceneGraphs.json", "val_sceneGraphs.json" ]
@@ -132,6 +170,7 @@ if __name__ == "__main__":
     # load dictionaries
     ent_dict = SymbolDictionary.load_from_file(ent_dict_path)
     pred_dict = SymbolDictionary.load_from_file(pred_dict_path)
+    pred_use_prob = json.load(open(pred_use_prob_path))
 
     # load h5s
     h5_paths = [ os.path.join(object_features_dir, "gqa_objects_%d.h5" % i) for i in range(n_h5s)]
@@ -154,27 +193,29 @@ if __name__ == "__main__":
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
 
             if box_source == "gt":
-                graph_entries = get_roidb_from_gt(ent_boxes, ent_labels, rel_mat, use_none_label)
+                graph_entries = get_roidb_from_gt(ent_boxes, ent_labels, rel_mat, pred_use_prob, use_none_label)
                 for entry in graph_entries:
                     entry["image_id"] = image_id
                     entry["width"] = meta["width"]
                     entry["height"] = meta["height"]
-            elif box_source == "proposal":
-                raise NotImplementedError
+            # elif box_source == "proposal":
+            #     proposals = h5_boxes[meta["file"]][meta["idx"], :meta["objectsNum"], :]
+            #     sbj_boxes, obj_boxes, rlp_labels = get_roidb_from_proposals(proposals, ent_boxes, ent_labels, rel_mat)
             else:
                 raise Exception("invalid box source")
 
-            entries.append(graph_entries)
+            entries.extend(graph_entries)
             triple_cnt[split] += len(graph_entries)
 
         # with open(os.path.join(out_dir, "%s_%s_triples.json" % (split, box_source)), "w") as f:
         #     json.dump(entries, f)
 
-        if use_none_label:
-            out_name = "%s_all_triples_use_none_label.pkl" % split
-        else:
-            out_name = "%s_all_triples.pkl" % split
+
+        out_name = split + "_triples"
+        if use_none_label: out_name = out_name + "_use_none"
+        out_name = out_name + ".pkl"
         with open(os.path.join(out_dir, out_name), "wb") as f:
             pickle.dump(entries, f)
+            print("dumped to %s" % out_name)
 
-    print(triple_cnt)
+    print("triple count: %s" % str(triple_cnt))
