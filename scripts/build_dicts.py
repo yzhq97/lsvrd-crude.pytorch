@@ -74,7 +74,6 @@ if __name__ == "__main__":
 
     print("    adding symbols ...")
 
-
     for ent_name, cnt in tqdm(ent_cnt.items()):
         ent_dict.add_sym(ent_name)
         tokens = word_dict.tokenize(ent_name, add_sym=True)
@@ -90,25 +89,22 @@ if __name__ == "__main__":
     pred_dict.dump_to_file("cache/pred_dict.json")
 
     # get glove words
-    print("    parsing glove words")
+    print("    parsing glove words and embeddings")
+    glove_lines = open(glove_txt_path).readlines()
     glove_words = []
-    with open(glove_txt_path) as f:
-        for line in tqdm(f.readlines()):
-            elems = line.split(' ')
-            word = elems[0]
-            glove_words.append(word)
-    print("    parsing glove embeddings")
-    glove_emb = np.zeros([len(glove_words), emb_dim])
-    with open(glove_txt_path) as f:
-        for i, line in tqdm(enumerate(f.readlines())):
-            elems = line.split(' ')
-            vec = elems[1:]
-            vec = [float(_) for _ in vec]
-            glove_emb[i] = vec
+    glove_emb = np.zeros([len(glove_lines), emb_dim])
+    for i in trange(len(glove_lines)):
+        line = glove_lines[i]
+        elems = line.split(' ')
+        word = elems[0]
+        glove_words.append(word)
+        vec = elems[1:]
+        vec = [float(_) for _ in vec]
+        glove_emb[i] = vec
 
     print("    saving word embeddings...")
     word_emb, uninit = create_glove_emb(word_dict, glove_words, glove_emb)
-    np.save("cache/word_emb_init.npy", word_emb)
+    np.save("cache/word_emb_init_%dd.npy" % emb_dim, word_emb)
 
     print()
     print("    %d entity categories, %d predicates" % (len(ent_dict), len(pred_dict)))

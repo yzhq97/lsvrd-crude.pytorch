@@ -6,7 +6,7 @@ class RelationNet (nn.Module):
 
     def __init__(self, in_dim, crop_size, emb_dim):
         super(RelationNet, self).__init__()
-        assert crop_size == 7
+        assert crop_size >= 5
 
         self.l1 = nn.Sequential(
             nn.Conv2d(in_dim, int(emb_dim/2), kernel_size=3, stride=2),

@@ -4,7 +4,7 @@ class SymbolDictionary:
 
     all_puct = ["?", "!", "\\", "/", ")", "(", ".", ",", ";", ":"]
     ignored_puncts = ["?", "!", "\\", "/", ")", "("]
-    kept_puncts = [".", ",", ";", ":"]
+    kept_puncts = [".", ",", ";", ":", "-"]
     end_puncts = [">", "<", ":"]
     delim = " "
 

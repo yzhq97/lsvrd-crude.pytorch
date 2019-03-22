@@ -37,9 +37,7 @@ class TripletLoss(nn.Module):
         neg_s = s[neg_ind[:, 0], neg_ind[:, 1]].view([N, N-1])
 
         loss = neg_s - pos_s + self.margin # [ N, N-1 ]
-        eps = torch.ones_like(loss).mul(self.eps)
-        loss = torch.where(loss > 0, loss, eps)
-
+        loss = loss.clamp(min=0.0)
         loss, _ = loss.topk(k=self.n_neg, dim=1, sorted=False)
         loss = loss.mean()
 

@@ -113,6 +113,6 @@ if __name__ == "__main__":
         pred_use_prob.append(rel_prob)
     pred_dict_use.dump_to_file(os.path.join(out_dir, "pred_dict_%d.json" % n_pred_use))
 
-    with open(os.path.join(out_dir, "pred_use_prob_%d.json" % n_pred_use), "w") as f:
+    with open(os.path.join(out_dir, "pred_use_prob_%d_max_%d.json" % (n_pred_use, n_rel_max)), "w") as f:
         json.dump(pred_use_prob, f)
-        print("use prob dumped to pred_use_prob_%d.json" % n_pred_use)
+        print("use prob dumped to pred_use_prob_%d_max_%d.json" % (n_pred_use, n_rel_max))

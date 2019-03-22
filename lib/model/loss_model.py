@@ -25,7 +25,6 @@ class LossModel(nn.Module):
         trsm_loss = self.triplet_softmax_loss(s.mul(self.similarity_norm)) # Ly_trsm
         tr_loss = self.triplet_loss(s.t())  # Lx_tr
         loss = tr_loss + trsm_loss
-
         return loss
 
     @classmethod

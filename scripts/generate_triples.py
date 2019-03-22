@@ -42,51 +42,6 @@ def get_rel_mat(eid2idx, scene_graph, pred_dict: SymbolDictionary):
 
     return rel_mat
 
-# def compute_iou_mat(b1, b2):
-#
-#     x11, y11, x12, y12 = np.split(b1, 4, axis=1)
-#     x21, y21, x22, y22 = np.split(b2, 4, axis=1)
-#     xA = np.maximum(x11, np.transpose(x21))
-#     yA = np.maximum(y11, np.transpose(y21))
-#     xB = np.minimum(x12, np.transpose(x22))
-#     yB = np.minimum(y12, np.transpose(y22))
-#     intersection = np.maximum((xB - xA), 0) * np.maximum((yB - yA), 0)
-#     b1_area = (x12 - x11) * (y12 - y11)
-#     b2_area = (x22 - x21) * (y22 - y21)
-#     union = b1_area + np.transpose(b2_area) - intersection
-#     iou = intersection / union
-#     return iou
-
-# def get_roidb_from_proposals(proposals, gt_boxes, ent_labels, rel_mat, threshold = 0.5):
-#
-#     iou_mat = compute_iou_mat(proposals, gt_boxes)
-#     max_idx = np.argmax(iou_mat, axis=1)
-#     max_iou = iou_mat[ np.arange(len(max_idx)), max_idx ]
-#
-#     pos_proposals = np.where(max_iou >= threshold)
-#     n_pos_props = len(pos_proposals)
-#     pos2gt = max_idx[pos_proposals]
-#
-#     sbj_boxes = []
-#     obj_boxes = []
-#     rlp_labels = []
-#
-#     for i in range(n_pos_props):
-#         for j in range(n_pos_props):
-#             if i != j and pos2gt[i] != pos2gt[j]:
-#                 sbj_gt = pos2gt[i]
-#                 obj_gt = pos2gt[j]
-#                 for pred_id in rel_mat[sbj_gt][obj_gt]:
-#                     sbj_boxes.append(proposals[i])
-#                     obj_boxes.append(proposals[j])
-#                     rlp_labels.append([ ent_labels[sbj_gt], pred_id, ent_labels[obj_gt] ])
-#
-#     sbj_boxes = np.concatenate(sbj_boxes, axis=0)
-#     obj_boxes = np.concatenate(obj_boxes, axis=0)
-#     rlp_labels = np.array(rlp_labels, dtype="int32")
-#
-#     return sbj_boxes, obj_boxes, rlp_labels
-
 def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, pred_use_prob, use_none_label):
 
     entries = []
@@ -118,31 +73,6 @@ def get_roidb_from_gt(gt_boxes, ent_labels, rel_mat, pred_use_prob, use_none_lab
 
     return entries
 
-# def generate_batch_bal(labels, N_each):
-#     N_total = len(labels)
-#     num_batch = np.int32(N_total/N_each)
-#     if N_total%N_each == 0:
-#         index_box = range(N_total)
-#     else:
-#         index_box = np.empty(shape=[N_each*(num_batch+1)],dtype=np.int32)
-#         index_box[0:N_total] = range(N_total)
-#         N_rest = N_each*(num_batch+1) - N_total
-#
-#         unique_labels = np.unique(labels, axis = 0)
-#         N_unique = len(unique_labels)
-#         num_label = np.zeros([N_unique,])
-#         for ii in range(N_unique):
-#             num_label[ii]=np.sum(labels == unique_labels[ii])
-#         prob_label = np.sum(num_label)/num_label
-#         prob_label = prob_label/np.sum(prob_label)
-#         index_rest = np.random.choice(N_unique, size=[N_rest,], p=prob_label)
-#         for ii in range(N_rest):
-#             ind = index_rest[ii]
-#             ind2 = np.where(labels == unique_labels[ind])[0]
-#             a = np.random.randint(len(ind2))
-#             index_box[N_total+ii] = ind2[a]
-#     return index_box
-
 if __name__ == "__main__":
 
     print("generating triples ...")
@@ -150,10 +80,12 @@ if __name__ == "__main__":
     image_dir = "data/gqa/images"
     box_source = "gt"
     out_dir = "cache"
+    n_preds = 311
+    n_rel_max = 100000
 
     ent_dict_path = "cache/ent_dict.json"
-    pred_dict_path = "cache/pred_dict_311.json"
-    pred_use_prob_path = "cache/pred_use_prob_311.json"
+    pred_dict_path = "cache/pred_dict_%d.json" % n_preds
+    pred_use_prob_path = "cache/pred_use_prob_%d_max_%d.json" % (n_preds, n_rel_max)
     balanced = False
 
     use_none_label = True
@@ -210,9 +142,10 @@ if __name__ == "__main__":
         # with open(os.path.join(out_dir, "%s_%s_triples.json" % (split, box_source)), "w") as f:
         #     json.dump(entries, f)
 
-
         out_name = split + "_triples"
+        out_name = out_name + "_%s_boxes" % box_source
         if use_none_label: out_name = out_name + "_use_none"
+        out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
         out_name = out_name + ".pkl"
         with open(os.path.join(out_dir, out_name), "wb") as f:
             pickle.dump(entries, f)

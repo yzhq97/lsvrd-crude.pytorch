@@ -20,8 +20,10 @@ def train(word_emb, vision_model, language_model, loss_model,
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1,
                                                 gamma=cfg.train.learning_rate_decay)
     logger = Logger(os.path.join(out_dir, "log.txt"))
+    tfb_logger = TFBLogger(out_dir)
     if grad_freq > 0: plt.ion()
     n_batches = len(train_loader)
+    step = 0
 
     for epoch in range(n_epochs):
 
@@ -31,15 +33,14 @@ def train(word_emb, vision_model, language_model, loss_model,
         if epoch % val_freq == 0:
             vision_model.train(False)
             language_model.train(False)
-            ent_acc, rel_acc, ent_std, rel_std = validate(
+            ent_acc, rel_acc = validate(
                 word_emb, vision_model, language_model, val_loader,
-                word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length)
-            logstr = "epoch %2d | ent acc(top50): %.3f std: %.2f | rel acc(top20): %.3f std: %.2f" % (
-                epoch, ent_acc, ent_std, rel_acc, rel_std)
+                word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length, tfb_logger, step)
+            logstr = "epoch %2d | ent acc(top20): %.3f | rel acc(top20): %.3f" % (
+                epoch, ent_acc, rel_acc)
             logger.write("%-80s" % logstr)
             vision_model.train(True)
             language_model.train(True)
-
 
         tic_0 = time.time()
 
@@ -73,7 +74,7 @@ def train(word_emb, vision_model, language_model, loss_model,
             obj_loss = loss_model(obj_v_emb, obj_t_emb)
             rel_loss = loss_model(rel_v_emb, rel_t_emb)
 
-            loss = sbj_loss + obj_loss + rel_loss
+            loss = sbj_loss + obj_loss + 2 * rel_loss
 
             tic_3 = time.time()
 
@@ -83,10 +84,10 @@ def train(word_emb, vision_model, language_model, loss_model,
             tic_4 = time.time()
 
             if grad_freq > 0 and i % grad_freq == 0:
-                plot_grad_flow(named_params, plt, epoch+1, i)
-                plt.draw()
-                plt.pause(0.0001)
-                plt.clf()
+                for n, p in named_params:
+                    if not "bias" in n:
+                        name_path = n.replace(".", "/")
+                        tfb_logger.histo_summary("grad/%s" % name_path, p.grad.data.cpu().numpy(), step)
 
             epoch_loss += loss.item() * train_loader.batch_size
 
@@ -94,12 +95,16 @@ def train(word_emb, vision_model, language_model, loss_model,
                      (epoch+1, i+1, n_batches, loss.item(),
                       1000*(tic_4-tic_0), 1000*(tic_2-tic_0), 1000*(tic_4-tic_2))
             print("%-80s" % logstr, end="\r")
+            tfb_logger.scalar_summary("loss/ent", sbj_loss.item()+obj_loss.item(), step)
+            tfb_logger.scalar_summary("loss/rel", rel_loss.item(), step)
+            tfb_logger.scalar_summary("loss/total", loss.item(), step)
 
             tic_0 = time.time()
+            step += train_loader.step_size
 
         epoch_loss /= n_batches * train_loader.batch_size
 
-        logstr = "epoch %2d | train_loss: %5.2f" % (epoch+1, epoch_loss)
+        logstr = "epoch %2d | train_loss: %.3f" % (epoch+1, epoch_loss)
         logger.write("%-80s" % logstr)
 
         vision_model_path = os.path.join(out_dir, "vision_model_%d.pth" % (epoch+1))
@@ -109,9 +114,9 @@ def train(word_emb, vision_model, language_model, loss_model,
 
 
 def validate(word_emb, vision_model, language_model, loader,
-             word_dict, ent_dict, pred_dict, tokens_length):
+             word_dict, ent_dict, pred_dict, tokens_length, tfb_logger, step):
 
     ent_embs = get_sym_emb(word_emb, language_model, word_dict, ent_dict, tokens_length)
     pred_embs = get_sym_emb(word_emb, language_model, word_dict, pred_dict, tokens_length)
 
-    return accuracy(vision_model, loader, ent_embs, pred_embs)
+    return accuracy(vision_model, loader, ent_embs, pred_embs, tfb_logger, step, k_ent=20, k_rel=20)

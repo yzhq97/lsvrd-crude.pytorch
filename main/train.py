@@ -16,20 +16,21 @@ from torch.utils.data import DataLoader
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='configs/lsvrd-vgg19-512.json')
+    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-gru-300d-1layer-64-32-0.2-5.0-1001-gt-311-100k.json')
     parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)
     parser.add_argument('--val_freq', type=int, default=1, help="run validation between how many epochs")
     parser.add_argument('--out_dir', type=str, default='out')
-    parser.add_argument('--grad_freq', type=int, default=0)
+    parser.add_argument('--grad_freq', type=int, default=100)
     args = parser.parse_args()
     return args
 
-if __name__ == "__main__":
-
-    args = parse_args()
+def main(args):
+    _, cfg_name = os.path.split(args.config)
+    cfg_name, _ = os.path.splitext(cfg_name)
     cfg = edict(json.load(open(args.config)))
+    out_dir = os.path.join(args.out_dir, cfg_name)
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
@@ -78,4 +79,9 @@ if __name__ == "__main__":
     print("training started...")
     train(word_emb, vision_model, language_model, loss_model,
           train_loader, val_loader, word_dict, ent_dict, pred_dict,
-          args.n_epochs, args.val_freq, args.out_dir, cfg, args.grad_freq)
+          args.n_epochs, args.val_freq, out_dir, cfg, args.grad_freq)
+
+if __name__ == "__main__":
+
+    args = parse_args()
+    main(args)

@@ -42,26 +42,25 @@ def topk_predictions(k, x_emb, label_emb, similarity):
 
     return top_predictions
 
-def matches(predictions, labels):
+def compute_matches(predictions, labels):
     labels = labels.unsqueeze(1).repeat(1, predictions.size(1))
     matches = torch.eq(predictions, labels)
-    _, matches = matches.max(dim=1)
+    matches, _ = matches.max(dim=1)
     return matches
 
 
-def accuracy(vision_model, loader, ent_t_embs, pred_embs, k_ent=50, k_rel=20):
+def accuracy(vision_model, loader, ent_t_embs, pred_embs, tfb_logger, step, k_ent=20, k_rel=20):
 
     n_batches = len(loader)
     similarity = PairwiseCosineSimilarity()
 
+    ent_predictions = []
+    rel_predictions = []
     ent_matches = []
     rel_matches = []
 
     n_ent_labels = ent_t_embs.size(0)
     n_preds = pred_embs.size(0)
-    ent_bincounts = np.zeros([n_ent_labels], dtype=np.int32)
-    rel_bincounts = np.zeros([n_preds], dtype=np.int32)
-
     for i, data in enumerate(loader):
 
         print("evaluating batch %4d/%4d" % (i+1, n_batches), end="\r")
@@ -80,13 +79,13 @@ def accuracy(vision_model, loader, ent_t_embs, pred_embs, k_ent=50, k_rel=20):
         batch_obj_predictions = topk_predictions(k_ent, obj_v_embs, ent_t_embs, similarity)
         batch_rel_predictions = topk_predictions(k_rel, rel_v_embs, pred_embs, similarity)
 
-        ent_bincounts += np.bincount(batch_sbj_predictions.view(-1).cpu().numpy(), minlength=n_ent_labels)
-        ent_bincounts += np.bincount(batch_obj_predictions.view(-1).cpu().numpy(), minlength=n_ent_labels)
-        rel_bincounts += np.bincount(batch_rel_predictions.view(-1).cpu().numpy(), minlength=n_preds)
+        ent_predictions.append(batch_sbj_predictions)
+        ent_predictions.append(batch_obj_predictions)
+        rel_predictions.append(batch_rel_predictions)
 
-        batch_sbj_matches = matches(batch_sbj_predictions, sbj_labels)
-        batch_obj_matches = matches(batch_obj_predictions, obj_labels)
-        batch_rel_matches = matches(batch_rel_predictions, rel_labels)
+        batch_sbj_matches = compute_matches(batch_sbj_predictions, sbj_labels)
+        batch_obj_matches = compute_matches(batch_obj_predictions, obj_labels)
+        batch_rel_matches = compute_matches(batch_rel_predictions, rel_labels)
 
         ent_matches.append(batch_sbj_matches)
         ent_matches.append(batch_obj_matches)
@@ -98,9 +97,13 @@ def accuracy(vision_model, loader, ent_t_embs, pred_embs, k_ent=50, k_rel=20):
     ent_acc = ent_matches.float().mean().item()
     rel_acc = rel_matches.float().mean().item()
 
-    ent_distribution_std = ent_bincounts.std().item()
-    rel_distribution_std = rel_bincounts.std().item()
+    tfb_logger.scalar_summary("acc/ent(top%d)" % k_ent, ent_acc, step)
+    tfb_logger.scalar_summary("acc/rel(top%d)" % k_rel, rel_acc, step)
 
+    ent_predictions = torch.cat(ent_predictions, dim=0)
+    rel_predictions = torch.cat(rel_predictions, dim=0)
+    tfb_logger.histo_summary("predictions/ent", ent_predictions.data.cpu().numpy(), step)
+    tfb_logger.histo_summary("predictions/rel", rel_predictions.data.cpu().numpy(), step)
 
-    return ent_acc, rel_acc, ent_distribution_std, rel_distribution_std
+    return ent_acc, rel_acc
 
