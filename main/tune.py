@@ -126,7 +126,7 @@ def tune_learning_rate(base_cfg):
     values = [ 0.01, 0.005, 0.001, 0.0005 ]
     cfgs = []
     for value in values:
-        cfg_exp = base_cfg.copy()
+        cfg_exp = edict(deepcopy(base_cfg))
         cfg_exp.train.learning_rate = value
         cfgs.append(cfg_exp)
     run_configs(cfgs)
