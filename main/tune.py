@@ -37,6 +37,7 @@ def get_cfg_name(cfg):
     cfg_name += "-%s" % cfg.train.box_source
     cfg_name += "-%d" % cfg.n_preds
     cfg_name += "-%d" % cfg.n_rel_max
+    cfg_name += "-%f" % cfg.train.learning_rate
     return cfg_name
 
 def tune_backbone(base_cfg):
@@ -184,6 +185,6 @@ def run_configs(args, cfgs, n_concurrent=4):
 
 
 if __name__ == "__main__":
-    base_config_path = "configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000.json"
+    base_config_path = "configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000-0.001.json"
     base_cfg = edict(json.load(open(base_config_path)))
     tune_learning_rate(base_cfg)
