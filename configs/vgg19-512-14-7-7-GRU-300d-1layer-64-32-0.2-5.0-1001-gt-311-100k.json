@@ -32,7 +32,7 @@
   "loss_model": {
     "similarity_norm": 5.0,
     "margin": 0.2,
-    "n_neg": 32,
+    "n_neg": 128,
     "x_tr": true,
     "x_trsm": false,
     "y_tr": false,
@@ -41,13 +41,13 @@
   "train": {
     "learning_rate": 0.001,
     "learning_rate_decay": 0.8,
-    "batch_size": 64,
+    "batch_size": 256,
     "triples_path": "cache/train_triples_gt_boxes_use_none_311_max_100000.pkl",
     "box_source": "gt",
     "preload": false
   },
   "val": {
-    "batch_size": 64,
+    "batch_size": 256,
     "triples_path": "cache/val_triples_gt_boxes_use_none_311_max_100000.pkl",
     "box_source": "gt",
     "preload": false
