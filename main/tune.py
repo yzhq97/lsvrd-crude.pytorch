@@ -160,7 +160,7 @@ def tune_data_distribution(base_cfg):
     args.out_dir = "out/data_distribution"
     run_configs(args, cfgs)
 
-def run_configs(args, cfgs, n_concurrent=2):
+def run_configs(args, cfgs, n_concurrent=1):
     tasks = []
     for cfg in cfgs:
         cfg_name = get_cfg_name(cfg)
