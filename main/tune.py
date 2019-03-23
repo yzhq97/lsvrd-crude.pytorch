@@ -37,7 +37,7 @@ def get_cfg_name(cfg):
     cfg_name += "-%s" % cfg.train.box_source
     cfg_name += "-%d" % cfg.n_preds
     cfg_name += "-%d" % cfg.n_rel_max
-    cfg_name += "-%e" % cfg.train.learning_rate
+    cfg_name += "-%.0e" % cfg.train.learning_rate
     return cfg_name
 
 def tune_backbone(base_cfg):
