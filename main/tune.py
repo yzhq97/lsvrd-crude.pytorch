@@ -129,7 +129,9 @@ def tune_learning_rate(base_cfg):
         cfg_exp = edict(deepcopy(base_cfg))
         cfg_exp.train.learning_rate = value
         cfgs.append(cfg_exp)
-    run_configs(cfgs)
+    args = edict(deepcopy(default_args))
+    args.out_dir = "out/learning_rate"
+    run_configs(args, cfgs)
 
 def tune_loss_composition(base_cfg):
     values = [ (1, 0, 0, 1), (0, 1, 1, 0), (1, 1, 1, 1) ]
