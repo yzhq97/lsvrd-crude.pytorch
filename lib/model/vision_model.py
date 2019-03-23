@@ -20,14 +20,16 @@ class Identity(nn.Module):
 class VisionModel(nn.Module):
 
     def __init__(self, backbone,
-                 crop_and_resize: CropAndResizeFunction,
+                 ent_crop_and_resize: CropAndResizeFunction,
+                 rel_crop_and_resize: CropAndResizeFunction,
                  ent_net: EntityNet,
                  rel_net: RelationNet):
 
         super(VisionModel, self).__init__()
 
         self.backbone = backbone
-        self.crop_and_resize = crop_and_resize
+        self.ent_crop_and_resize = ent_crop_and_resize
+        self.rel_crop_and_resize = rel_crop_and_resize
         self.ent_net = ent_net
         self.rel_net = rel_net
 
@@ -36,18 +38,14 @@ class VisionModel(nn.Module):
         N = images.size(0)
         feature_maps = self.backbone(images)
 
-        box_ind = torch.arange(N, dtype=torch.int).repeat(3).cuda()
-        boxes = torch.cat([sbj_boxes, obj_boxes, rel_boxes], dim=0)
-        roi_features = self.crop_and_resize(feature_maps, boxes, box_ind) # [ N, C, crop_size, crop_size ]
+        box_ind = torch.arange(N, dtype=torch.int).cuda()
+        ent_box_ind = box_ind.repeat(2)
+        ent_boxes = torch.cat([sbj_boxes, obj_boxes], dim=0)
+        ent_features = self.ent_crop_and_resize(feature_maps, ent_boxes, ent_box_ind)
+        rel_features = self.rel_crop_and_resize(feature_maps, rel_boxes, box_ind)
 
-        # gradcheck(self.crop_and_resize, (feature_maps, boxes, box_ind), raise_exception=True)
-
-        sbj_features = roi_features[:N]
-        obj_features = roi_features[N:2*N]
-        rel_features = roi_features[2*N:]
-
-        sbj_emb, sbj_inter = self.ent_net(sbj_features)
-        obj_emb, obj_inter = self.ent_net(obj_features)
+        sbj_emb, sbj_inter = self.ent_net(ent_features[:N])
+        obj_emb, obj_inter = self.ent_net(ent_features[N:])
         rel_emb = self.rel_net(rel_features, sbj_emb, sbj_inter, obj_emb, obj_inter)
 
         return sbj_emb, obj_emb, rel_emb
@@ -59,11 +57,12 @@ class VisionModel(nn.Module):
         backbone = backbone_cls()
         backbone.freeze()
 
-        crop_and_resize = CropAndResizeFunction(cfg.crop_size, cfg.crop_size)
+        ent_crop_and_resize = CropAndResizeFunction(cfg.ent_crop_size, cfg.ent_crop_size)
+        rel_crop_and_resize = CropAndResizeFunction(cfg.rel_crop_size, cfg.rel_crop_size)
         ent_net = EntityNet(cfg.feature_dim, cfg.ent_crop_size, cfg.emb_dim)
         rel_net = RelationNet(cfg.feature_dim, cfg.rel_crop_size, cfg.emb_dim)
 
-        model = cls(backbone, crop_and_resize, ent_net, rel_net)
+        model = cls(backbone, ent_crop_and_resize, rel_crop_and_resize, ent_net, rel_net)
 
         return model
 
