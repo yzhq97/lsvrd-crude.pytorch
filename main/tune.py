@@ -121,6 +121,15 @@ def tune_similarity_norm(base_cfg):
     args.out_dir = "out/similarity_norm"
     run_configs(args, cfgs)
 
+def tune_learning_rate(base_cfg):
+    values = [ 0.01, 0.005, 0.001, 0.0005 ]
+    cfgs = []
+    for value in values:
+        cfg_exp = base_cfg.copy()
+        cfg_exp.train.learning_rate = value
+        cfgs.append(cfg_exp)
+    run_configs(cfgs)
+
 def tune_loss_composition(base_cfg):
     values = [ (1, 0, 0, 1), (0, 1, 1, 0), (1, 1, 1, 1) ]
     cfgs = []
@@ -177,4 +186,4 @@ def run_configs(args, cfgs, n_concurrent=4):
 if __name__ == "__main__":
     base_config_path = "configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000.json"
     base_cfg = edict(json.load(open(base_config_path)))
-    tune_sampling(base_cfg)
+    tune_learning_rate(base_cfg)
