@@ -7,6 +7,8 @@ from easydict import EasyDict as edict
 from main.train import train_with_config
 import multiprocessing as mp
 
+available_gpus = [ 0, 1, 2, 3 ]
+
 default_args = edict({
     "n_epochs": 20,
     "n_workers": 2,
@@ -168,10 +170,15 @@ def run_configs(args, cfgs, n_concurrent=2):
         args.cfg_name = cfg_name
         tasks.append((args, cfg))
     pool = []
+    gpu_status = [ 0 for _ in range(len(available_gpus)) ]
     for task in tasks:
         args, cfg = task
         if len(pool) < n_concurrent:
+            gpu_idx = gpu_status.index(min(gpu_status))
+            gpu_status[gpu_idx] += 1
+            args.gpu_id = available_gpus[gpu_idx]
             runner = mp.Process(target=train_with_config, args=(args, cfg))
+            runner.gpu_idx = gpu_idx
             pool.append(runner)
             pool[-1].start()
         else:
@@ -179,6 +186,10 @@ def run_configs(args, cfgs, n_concurrent=2):
                 time.sleep(10)
                 for i in range(len(pool)):
                     if not pool[i].is_alive():
+                        gpu_status[pool[i].gpu_idx] -= 1
+                        gpu_idx = gpu_status.index(min(gpu_status))
+                        gpu_status[gpu_idx] += 1
+                        args.gpu_id = available_gpus[gpu_idx]
                         pool[i] = mp.Process(target=train_with_config, args=(args, cfg))
                         pool[i].start()
                         break

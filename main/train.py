@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('--val_freq', type=int, default=1, help="run validation between how many epochs")
     parser.add_argument('--out_dir', type=str, default='out')
     parser.add_argument('--grad_freq', type=int, default=100)
+    parser.add_argument('--gpu_id', type=int, default=0)
     args = parser.parse_args()
     _, cfg_name = os.path.split(args.config)
     cfg_name, _ = os.path.splitext(cfg_name)
@@ -30,6 +31,9 @@ def parse_args():
     return args
 
 def train_with_config(args, cfg):
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
+
     out_dir = os.path.join(args.out_dir, args.cfg_name)
 
     torch.manual_seed(args.seed)
