@@ -40,6 +40,7 @@ def get_cfg_name(cfg):
     cfg_name += "-%d" % cfg.n_preds
     cfg_name += "-%d" % cfg.n_rel_max
     cfg_name += "-%.0e" % cfg.train.learning_rate
+    cfg_name += "-%.1f" % cfg.train.learning_rate_decay
     return cfg_name
 
 def tune_backbone(base_cfg):
@@ -135,6 +136,17 @@ def tune_learning_rate(base_cfg):
     args.out_dir = "out/learning_rate"
     run_configs(args, cfgs)
 
+def tune_learning_rate(base_cfg):
+    values = [ 0.8, 0.6, 0.4, 0.2 ]
+    cfgs = []
+    for value in values:
+        cfg_exp = edict(deepcopy(base_cfg))
+        cfg_exp.train.learning_rate_decay = value
+        cfgs.append(cfg_exp)
+    args = edict(deepcopy(default_args))
+    args.out_dir = "out/learning_rate_decay"
+    run_configs(args, cfgs)
+
 def tune_loss_composition(base_cfg):
     values = [ (1, 0, 0, 1), (0, 1, 1, 0), (1, 1, 1, 1) ]
     cfgs = []
@@ -198,6 +210,6 @@ def run_configs(args, cfgs):
 
 
 if __name__ == "__main__":
-    base_config_path = "configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000-0.001.json"
+    base_config_path = "configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000-1e-4-0.8.json"
     base_cfg = edict(json.load(open(base_config_path)))
     tune_crop_size(base_cfg)
