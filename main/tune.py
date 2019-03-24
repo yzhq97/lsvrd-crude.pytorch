@@ -200,4 +200,4 @@ def run_configs(args, cfgs, n_concurrent=2):
 if __name__ == "__main__":
     base_config_path = "configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000-0.001.json"
     base_cfg = edict(json.load(open(base_config_path)))
-    tune_learning_rate(base_cfg)
+    tune_crop_size(base_cfg)
