@@ -74,7 +74,7 @@ def train(word_emb, vision_model, language_model, loss_model,
             obj_loss = loss_model(obj_v_emb, obj_t_emb)
             rel_loss = loss_model(rel_v_emb, rel_t_emb)
 
-            loss = sbj_loss + obj_loss + 2 * rel_loss
+            loss = sbj_loss + obj_loss + rel_loss
 
             tic_3 = time.time()
 
