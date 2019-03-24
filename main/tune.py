@@ -8,7 +8,7 @@ from main.train import train_with_config
 import multiprocessing as mp
 
 available_gpus = [ 0, 1, 2, 3 ]
-
+n_concurrent = 4
 default_args = edict({
     "n_epochs": 20,
     "n_workers": 2,
@@ -162,7 +162,7 @@ def tune_data_distribution(base_cfg):
     args.out_dir = "out/data_distribution"
     run_configs(args, cfgs)
 
-def run_configs(args, cfgs, n_concurrent=2):
+def run_configs(args, cfgs):
     tasks = []
     for cfg in cfgs:
         cfg_name = get_cfg_name(cfg)
