@@ -5,21 +5,27 @@ class EntityNet (nn.Module):
 
     def __init__(self, in_dim, crop_size, emb_dim):
         super(EntityNet, self).__init__()
-        assert crop_size >= 3
+        assert crop_size >= 3 and crop_size % 2 == 1
 
+        hid_dim = int(emb_dim/2)
         l1_layers = [
-            nn.Conv2d(in_dim, emb_dim, kernel_size=1),
-            nn.BatchNorm2d(emb_dim),
+            nn.Conv2d(in_dim, hid_dim, kernel_size=1),
+            nn.BatchNorm2d(hid_dim),
             nn.ReLU()
         ]
         current_size = crop_size
-        while current_size > 1:
-            stride = 2 if current_size >= 5 else 1
-            layer = nn.Conv2d(emb_dim, emb_dim, kernel_size=3, stride=stride)
-            l1_layers.append(layer)
-            l1_layers.append(nn.BatchNorm2d(emb_dim))
-            l1_layers.append(nn.ReLU())
-            current_size = current_size - 2 - (stride-1) * 2
+        while current_size > 3:
+            l1_layers.extend([
+                nn.Conv2d(hid_dim, hid_dim, kernel_size=3),
+                nn.BatchNorm2d(hid_dim),
+                nn.ReLU()
+            ])
+            current_size = current_size - 2
+        l1_layers.extend([
+            nn.Conv2d(hid_dim, emb_dim, kernel_size=3),
+            nn.BatchNorm2d(emb_dim),
+            nn.ReLU()
+        ])
         self.l1 = nn.Sequential(*l1_layers)
 
         self.l2 = nn.Sequential(
