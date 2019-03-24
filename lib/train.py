@@ -36,7 +36,7 @@ def train(word_emb, vision_model, language_model, loss_model,
             ent_acc, rel_acc = validate(
                 word_emb, vision_model, language_model, val_loader,
                 word_dict, ent_dict, pred_dict, cfg.language_model.tokens_length, tfb_logger, step)
-            logstr = "epoch %2d | ent acc(top30): %.3f | rel acc(top20): %.3f" % (
+            logstr = "epoch %2d | ent acc(top20): %.3f | rel acc(top20): %.3f" % (
                 epoch, ent_acc, rel_acc)
             logger.write("%-80s" % logstr)
             vision_model.train(True)

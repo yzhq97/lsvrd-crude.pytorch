@@ -49,7 +49,7 @@ def compute_matches(predictions, labels):
     return matches
 
 
-def accuracy(vision_model, loader, ent_t_embs, pred_embs, tfb_logger, step, k_ent=30, k_rel=20):
+def accuracy(vision_model, loader, ent_t_embs, pred_embs, tfb_logger, step, k_ent=20, k_rel=20):
 
     n_batches = len(loader)
     similarity = PairwiseCosineSimilarity()
