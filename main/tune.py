@@ -242,7 +242,7 @@ if __name__ == "__main__":
 
     available_gpus = run_args.gpus
     n_concurrent = run_args.n_p
-    base_config_path = run_args.configs
+    base_config_path = run_args.config
     fn_name = "tune_%s" % run_args.item
     tune_fn = tune_fns[fn_name]
     base_cfg = edict(json.load(open(base_config_path)))
