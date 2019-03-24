@@ -2,13 +2,14 @@ import sys, os
 sys.path.insert(0, os.getcwd())
 import json
 import time
+import argparse
 from copy import deepcopy
 from easydict import EasyDict as edict
 from main.train import train_with_config
 import multiprocessing as mp
 
-available_gpus = [ 0, 1, 2, 3 ]
-n_concurrent = 4
+available_gpus = []
+n_concurrent = 0
 default_args = edict({
     "n_epochs": 20,
     "n_workers": 2,
@@ -16,6 +17,16 @@ default_args = edict({
     "val_freq": 1,
     "grad_freq": 100,
 })
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--item', type=str, help="item to tune, e.g. 'learning_rate'")
+    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000-1e-4-0.8.json')
+    parser.add_argument('--gpus', type=str, help="comma separated gpu_ids to use, e.g. '2,5,6'")
+    parser.add_argument('--n_p', type=int, help="number of concurrent processes")
+    args = parser.parse_args()
+    args.gpus = args.gpus.split(",")
+    return args
 
 def get_cfg_name(cfg):
     cfg_name = ""
@@ -49,7 +60,7 @@ def tune_backbone(base_cfg):
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
         cfg_exp.vision_model.backbone = value
-        cfg_exp.vision_model.cache_dir = "gqa_%s_%dx%d" % (
+        cfg_exp.vision_model.cache_dir = "cache/gqa_%s_%dx%d" % (
             value, cfg_exp.vision_model.feature_height, cfg_exp.vision_model.feature_width)
         cfgs.append(cfg_exp)
     args = edict(deepcopy(default_args))
@@ -68,7 +79,7 @@ def tune_crop_size(base_cfg):
     args.out_dir = "out/crop_size"
     run_configs(args, cfgs)
 
-def tune_rnn_types(base_cfg):
+def tune_rnn_type(base_cfg):
     values = [ "GRU", "LSTM" ]
     cfgs = []
     for value in values:
@@ -208,8 +219,26 @@ def run_configs(args, cfgs):
     for runner in pool:
         runner.join()
 
+tune_fns = {
+    "backbone": tune_backbone,
+    "crop_size": tune_crop_size,
+    "rnn_type": tune_rnn_type,
+    "rnn_layers": tune_rnn_layers,
+    "sampling": tune_sampling,
+    "margin": tune_margin,
+    "similariry_norm": tune_similarity_norm,
+    "learning_rate": tune_learning_rate,
+    "learning_rate_decay": tune_learning_rate_decay,
+    "loss_composition": tune_loss_composition,
+    "data_distribution": tune_data_distribution,
+}
 
 if __name__ == "__main__":
-    base_config_path = "configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000-1e-4-0.8.json"
+    run_args = parse_args()
+    available_gpus = run_args.gpus
+    n_concurrent = run_args.n_p
+    base_config_path = run_args.configs
+    fn_name = "tune_%s" % run_args.item
+    tune_fn = tune_fns[fn_name]
     base_cfg = edict(json.load(open(base_config_path)))
-    tune_learning_rate_decay(base_cfg)
+    tune_fn(base_cfg)
