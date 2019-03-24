@@ -32,7 +32,7 @@ def parse_args():
 
 def train_with_config(args, cfg):
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
 
     out_dir = os.path.join(args.out_dir, args.cfg_name)
 
