@@ -235,6 +235,11 @@ tune_fns = {
 
 if __name__ == "__main__":
     run_args = parse_args()
+
+    for arg in vars(run_args):
+        print("%10s: %s" % (arg, str(getattr(run_args, arg))))
+    print()
+
     available_gpus = run_args.gpus
     n_concurrent = run_args.n_p
     base_config_path = run_args.configs
