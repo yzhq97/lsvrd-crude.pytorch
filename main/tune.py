@@ -226,7 +226,7 @@ tune_fns = {
     "rnn_layers": tune_rnn_layers,
     "sampling": tune_sampling,
     "margin": tune_margin,
-    "similariry_norm": tune_similarity_norm,
+    "similarity_norm": tune_similarity_norm,
     "learning_rate": tune_learning_rate,
     "learning_rate_decay": tune_learning_rate_decay,
     "loss_composition": tune_loss_composition,
