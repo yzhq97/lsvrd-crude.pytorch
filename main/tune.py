@@ -193,6 +193,7 @@ def run_configs(args, cfgs):
         args.cfg_name = cfg_name
         tasks.append((args, cfg))
     pool = []
+    gpu_indices = []
     gpu_status = [ 0 for _ in range(len(available_gpus)) ]
     for task in tasks:
         args, cfg = task
@@ -201,16 +202,17 @@ def run_configs(args, cfgs):
             gpu_status[gpu_idx] += 1
             args.gpu_id = available_gpus[gpu_idx]
             runner = mp.Process(target=train_with_config, args=(args, cfg))
-            runner.gpu_idx = gpu_idx
             pool.append(runner)
+            gpu_indices.append(gpu_idx)
             pool[-1].start()
         else:
             while True:
                 time.sleep(10)
                 for i in range(len(pool)):
                     if not pool[i].is_alive():
-                        gpu_status[pool[i].gpu_idx] -= 1
+                        gpu_status[gpu_indices[i]] -= 1
                         gpu_idx = gpu_status.index(min(gpu_status))
+                        gpu_indices[i] = gpu_idx
                         gpu_status[gpu_idx] += 1
                         args.gpu_id = available_gpus[gpu_idx]
                         pool[i] = mp.Process(target=train_with_config, args=(args, cfg))
