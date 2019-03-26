@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-7-GRU-300d-1layer-64-32-0.2-5.0-1001-gt-311-100000.json')
+    parser.add_argument('--config', type=str)
     parser.add_argument('--n_epochs', type=int, default=20)
     parser.add_argument('--n_workers', type=int, default=1)
     parser.add_argument('--seed', type=int, default=999)

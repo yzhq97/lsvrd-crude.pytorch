@@ -41,6 +41,7 @@
   "train": {
     "learning_rate": 0.0001,
     "learning_rate_decay": 0.8,
+    "weight_decay": 0.0001,
     "batch_size": 256,
     "triples_path": "cache/train_triples_gt_boxes_use_none_311_max_100000.pkl",
     "box_source": "gt",
