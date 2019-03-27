@@ -15,7 +15,7 @@ default_args = edict({
     "n_workers": 4,
     "seed": 999,
     "val_freq": 1,
-    "grad_freq": 100,
+    "grad_freq": 0,
 })
 
 def parse_args():
@@ -246,6 +246,7 @@ tune_fns = {
     "learning_rate_decay": tune_learning_rate_decay,
     "loss_composition": tune_loss_composition,
     "data_distribution": tune_data_distribution,
+    "n_neg": tune_n_neg
 }
 
 if __name__ == "__main__":
