@@ -11,7 +11,7 @@ import multiprocessing as mp
 available_gpus = []
 n_concurrent = 0
 default_args = edict({
-    "n_epochs": 20,
+    "n_epochs": 15,
     "n_workers": 4,
     "seed": 999,
     "val_freq": 1,
