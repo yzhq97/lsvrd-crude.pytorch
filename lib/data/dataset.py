@@ -87,7 +87,7 @@ class GQATriplesDataset(Dataset):
                          "preload": preload
                          } ]
             image_ids = [ entry.image_id for entry in self.entries ]
-            self.h5_loader = H5DataLoader.load_from_directory(self.cache_dir, fields)
+            self.h5_loader = H5DataLoader.load_from_directory(self.cache_dir, fields, image_ids)
 
         self.preload = preload
         self.images = self.preload_images() if not pre_extract and preload else None
