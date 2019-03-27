@@ -88,4 +88,4 @@ def train_with_config(args, cfg):
 if __name__ == "__main__":
     args = parse_args()
     cfg = edict(json.load(open(args.config)))
-    train(args, cfg)
+    train_with_config(args, cfg)
