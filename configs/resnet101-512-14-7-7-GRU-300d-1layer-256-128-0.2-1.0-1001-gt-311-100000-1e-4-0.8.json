@@ -11,7 +11,7 @@
     "backbone": "resnet101",
     "feature_height": 14,
     "feature_width": 14,
-    "feature_dim": 512,
+    "feature_dim": 2048,
     "pre_extract": true,
     "image_dir": "data/gqa/images",
     "cache_dir": "data/gqa/gqa_vgg19_14x14",
