@@ -115,7 +115,7 @@ def tune_sampling(base_cfg):
     run_configs(args, cfgs)
 
 def tune_margin(base_cfg):
-    values = [ 0.1, 0.2, 0.3, 0.4, 0.5 ]
+    values = [ 0.05, 0.1, 0.2, 0.4 ]
     cfgs = []
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
@@ -206,7 +206,8 @@ def run_configs(args, cfgs):
             gpu_indices.append(gpu_idx)
             pool[-1].start()
         else:
-            while True:
+            started = False
+            while not started:
                 time.sleep(10)
                 for i in range(len(pool)):
                     if not pool[i].is_alive():
@@ -217,6 +218,7 @@ def run_configs(args, cfgs):
                         args.gpu_id = available_gpus[gpu_idx]
                         pool[i] = mp.Process(target=train_with_config, args=(args, cfg))
                         pool[i].start()
+                        started = True
                         break
     for runner in pool:
         runner.join()
