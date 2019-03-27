@@ -114,6 +114,17 @@ def tune_sampling(base_cfg):
     args.out_dir = "out/sampling"
     run_configs(args, cfgs)
 
+def tune_n_neg(base_cfg):
+    values = [ 32, 64, 128  ]
+    cfgs = []
+    for value in values:
+        cfg_exp = edict(deepcopy(base_cfg))
+        cfg_exp.loss_model.n_neg = value
+        cfgs.append(cfg_exp)
+    args = edict(deepcopy(default_args))
+    args.out_dir = "out/n_neg"
+    run_configs(args, cfgs)
+
 def tune_margin(base_cfg):
     values = [ 0.05, 0.1, 0.2, 0.4 ]
     cfgs = []
