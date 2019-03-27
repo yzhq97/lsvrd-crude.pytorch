@@ -86,6 +86,7 @@ class GQATriplesDataset(Dataset):
                          "dtype": "float32",
                          "preload": preload
                          } ]
+            image_ids = [ entry.image_id for entry in self.entries ]
             self.h5_loader = H5DataLoader.load_from_directory(self.cache_dir, fields)
 
         self.preload = preload

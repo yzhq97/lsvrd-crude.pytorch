@@ -8,21 +8,18 @@ from tqdm import tqdm, trange
 
 class H5DataLoader:
 
-    def __init__(self, info, h5s, fields, split_name="all"):
+    def __init__(self, info, h5s, fields, ids):
         """
         :param info: meta info loaded from "info.json"
         :param h5s: a list of h5s
         :param fields: specify which fields will be used and their order
                        as json array, e.g. [ {"name": "feature1", "preload": true}, ]
-        :param split_name: the split to use, e.g. "train", "val", etc.
         """
-
-        self.split_name = split_name
 
         self.name = info["name"]
         self.fields = [ self.get_field_info(info, field["name"]) for field in fields ]
         for i, field in enumerate(fields): self.fields[i]["preload"] = field["preload"]
-        self.ids = info["splits"][split_name]
+        self.ids = ids
         indices = info["indices"]
         self.indices = { key: (val["block"], val["idx"]) for key, val in indices.items() }
 
@@ -67,11 +64,11 @@ class H5DataLoader:
         return None
 
     @classmethod
-    def load_from_directory(cls, dir_path, fields, split_name="all"):
+    def load_from_directory(cls, dir_path, fields, ids):
         info_path = os.path.join(dir_path, "info.json")
         info = json.load(open(info_path))
         h5s = [ h5py.File(os.path.join(dir_path, "data_%d.h5" % i), "r") for i in range(info["n_blocks"]) ]
-        return cls(info, h5s, fields, split_name)
+        return cls(info, h5s, fields, ids)
 
 
 class H5DataWriter:
