@@ -50,6 +50,17 @@ class VisionModel(nn.Module):
 
         return sbj_emb, obj_emb, rel_emb
 
+    def infer_ent(self, image, boxes):
+
+        N = boxes.size(0)
+        feature_maps = self.backbone(image.unsqueeze(0))
+
+        box_ind = torch.zeros(N, dtype=torch.int).cuda()
+        ent_features = self.ent_crop_and_resize(feature_maps, boxes, box_ind)
+        ent_embs, ent_inters = self.ent_net(ent_features)
+
+        return ent_embs
+
     @classmethod
     def build_from_config(cls, cfg):
 
