@@ -31,7 +31,7 @@
   },
   "loss_model": {
     "similarity_norm": 1.0,
-    "margin": 0.2,
+    "margin": 0.3,
     "n_neg": 128,
     "x_tr": true,
     "x_trsm": false,
