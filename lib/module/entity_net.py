@@ -7,7 +7,7 @@ class EntityNet (nn.Module):
         super(EntityNet, self).__init__()
         assert crop_size >= 3 and crop_size % 2 == 1
 
-        hid_dim = int(emb_dim/2)
+        hid_dim = int(emb_dim)
         l1_layers = [
             nn.Conv2d(in_dim, hid_dim, kernel_size=1),
             nn.BatchNorm2d(hid_dim),
