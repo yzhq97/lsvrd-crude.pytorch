@@ -22,7 +22,6 @@ def parse_args():
     parser.add_argument('--max_entities', type=int, default=36)
     parser.add_argument('--gqa_objects_dir', type=str, default='data/gqa/objects')
     parser.add_argument('--out_dir', type=str, default='data/gqa')
-    parser.add_argument('--preload', type=bool, default=False)
     args = parser.parse_args()
     _, cfg_name = os.path.split(args.config)
     cfg_name, _ = os.path.splitext(cfg_name)
@@ -48,9 +47,10 @@ def infer_with_cfg(args, cfg):
     print("building model")
     with torch.no_grad():
         vision_model = VisionModel.build_from_config(cfg.vision_model)
-    vision_model = vision_model.cuda()
+        vision_model = vision_model.cuda()
+        vision_model.train(False)
+        vision_model.eval()
     n_v_params = count_parameters(vision_model)
-    vision_model.eval()
     print("vision model: {:,} parameters".format(n_v_params))
 
     print("loading boxes from gqa_objects_dir")
@@ -76,7 +76,7 @@ def infer_with_cfg(args, cfg):
     fields = [{ "name": "features",
                 "shape": [cfg.vision_model.feature_dim, cfg.vision_model.feature_height, cfg.vision_model.feature_width],
                 "dtype": "float32",
-                "preload": args.preload }]
+                "preload": False }]
     image_ids = [image_id for image_id in all_boxes.keys()]
     image_ids = list(set(image_ids))
     loader = H5DataLoader.load_from_directory(cfg.vision_model.cache_dir, fields, image_ids)
