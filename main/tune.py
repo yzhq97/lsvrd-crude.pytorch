@@ -39,14 +39,15 @@ def get_cfg_name(cfg):
     cfg_name += "-%d" % cfg.language_model.word_emb_dim
     cfg_name += "-%dlayer" % cfg.language_model.n_layers
     cfg_name += "-%d" % cfg.train.batch_size
-    cfg_name += "-%d" % cfg.loss_model.n_neg
-    cfg_name += "-%.1f" % cfg.loss_model.margin
-    cfg_name += "-%.1f" % cfg.loss_model.similarity_norm
+    cfg_name += "-%d" % cfg.ent_loss.n_neg
+    cfg_name += "-%.1f" % cfg.ent_loss.margin
+    cfg_name += "-%.1f" % cfg.rel_loss.margin
+    cfg_name += "-%.1f" % cfg.ent_loss.similarity_norm
     cfg_name += "-"
-    cfg_name += "1" if cfg.loss_model.x_tr else "0"
-    cfg_name += "1" if cfg.loss_model.x_trsm else "0"
-    cfg_name += "1" if cfg.loss_model.y_tr else "0"
-    cfg_name += "1" if cfg.loss_model.y_trsm else "0"
+    cfg_name += "1" if cfg.ent_loss.x_tr else "0"
+    cfg_name += "1" if cfg.ent_loss.x_trsm else "0"
+    cfg_name += "1" if cfg.ent_loss.y_tr else "0"
+    cfg_name += "1" if cfg.ent_loss.y_trsm else "0"
     cfg_name += "-%s" % cfg.train.box_source
     cfg_name += "-%d" % cfg.n_preds
     cfg_name += "-%d" % cfg.n_rel_max
@@ -106,7 +107,8 @@ def tune_sampling(base_cfg):
     cfgs = []
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
-        cfg_exp.loss_model.n_neg = int(value/2)
+        cfg_exp.ent_loss.n_neg = int(value/2)
+        cfg_exp.rel_loss.n_neg = int(value / 2)
         cfg_exp.train.batch_size = value
         cfg_exp.val.batch_size = value
         cfgs.append(cfg_exp)
@@ -119,7 +121,8 @@ def tune_n_neg(base_cfg):
     cfgs = []
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
-        cfg_exp.loss_model.n_neg = value
+        cfg_exp.ent_loss.n_neg = value
+        cfg_exp.rel_loss.n_neg = value
         cfgs.append(cfg_exp)
     args = edict(deepcopy(default_args))
     args.out_dir = "out/n_neg"
@@ -130,7 +133,8 @@ def tune_margin(base_cfg):
     cfgs = []
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
-        cfg_exp.loss_model.margin = value
+        cfg_exp.ent_loss.margin = value
+        cfg_exp.rel_loss.margin = value
         cfgs.append(cfg_exp)
     args = edict(deepcopy(default_args))
     args.out_dir = "out/margin"
@@ -141,7 +145,8 @@ def tune_similarity_norm(base_cfg):
     cfgs = []
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
-        cfg_exp.loss_model.similarity_norm = value
+        cfg_exp.ent_loss.similarity_norm = value
+        cfg_exp.rel_loss.similarity_norm = value
         cfgs.append(cfg_exp)
     args = edict(deepcopy(default_args))
     args.out_dir = "out/similarity_norm"
@@ -174,10 +179,14 @@ def tune_loss_composition(base_cfg):
     cfgs = []
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
-        cfg_exp.loss_model.x_tr = bool(value[0])
-        cfg_exp.loss_model.x_trsm = bool(value[1])
-        cfg_exp.loss_model.y_tr = bool(value[2])
-        cfg_exp.loss_model.y_trsm = bool(value[3])
+        cfg_exp.ent_loss.x_tr = bool(value[0])
+        cfg_exp.ent_loss.x_trsm = bool(value[1])
+        cfg_exp.ent_loss.y_tr = bool(value[2])
+        cfg_exp.ent_loss.y_trsm = bool(value[3])
+        cfg_exp.rel_loss.x_tr = bool(value[0])
+        cfg_exp.rel_loss.x_trsm = bool(value[1])
+        cfg_exp.rel_loss.y_tr = bool(value[2])
+        cfg_exp.rel_loss.y_trsm = bool(value[3])
         cfgs.append(cfg_exp)
     args = edict(deepcopy(default_args))
     args.out_dir = "out/loss_composition"
