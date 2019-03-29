@@ -39,9 +39,9 @@ class EntityNet (nn.Module):
         """
         :param x: [ B, C, aligned_h, aligned_w ]
         """
-        B, C, H, W = x.size()
         intermediate = self.l1(x)
-        intermediate = intermediate.squeeze()
+        B, C, _, _ = intermediate.size()
+        intermediate = intermediate.view(B, C)
         intermediate_relu = F.relu(intermediate)
         x = intermediate + self.l2(intermediate_relu)
         return x, intermediate_relu

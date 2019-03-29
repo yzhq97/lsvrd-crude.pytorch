@@ -47,9 +47,9 @@ class RelationNet (nn.Module):
         """
         :param x: [ B, C, aligned_h, aligned_w ]
         """
-        B, C, H, W = x.size()
         intermediate = self.l1(x)
-        intermediate = intermediate.squeeze()
+        B, C, _, _ = intermediate.size()
+        intermediate = intermediate.view(B, C)
         intermediate_relu = F.relu(intermediate)
         x = torch.cat([sbj_inter, intermediate_relu, obj_inter], dim=1)
         x = self.l2(x)
