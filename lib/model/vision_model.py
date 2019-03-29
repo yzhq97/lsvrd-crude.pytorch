@@ -61,9 +61,6 @@ class VisionModel(nn.Module):
         ent_features = self.ent_crop_and_resize(feature_map, ent_boxes, ent_box_ind)
         rel_features = self.rel_crop_and_resize(feature_map, rel_boxes, box_ind)
 
-        print(ent_features.size())
-        print(rel_features.size())
-
         sbj_emb, sbj_inter = self.ent_net(ent_features[:N])
         obj_emb, obj_inter = self.ent_net(ent_features[N:])
         rel_emb = self.rel_net(rel_features, sbj_emb, sbj_inter, obj_emb, obj_inter)
