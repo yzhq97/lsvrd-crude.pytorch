@@ -5,6 +5,7 @@ import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
 from lib.data.dataset import box_union
+from threading import Thread
 
 def get_triple_boxes(boxes):
 
@@ -21,7 +22,19 @@ def get_triple_boxes(boxes):
 
     return sbj_boxes, obj_boxes, rel_boxes
 
+class WriterThread(Thread):
+    def __init__(self, writer, image_id, data):
+        super(WriterThread, self).__init__()
+        self.writer = writer
+        self.image_id = image_id
+        self.data = data
+    def run(self):
+        self.writer.put(self.image_id, self.data)
+
+
 def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
+
+    writer_thread = None
 
     for image_id, ent_boxes in tqdm(all_ent_boxes.items()):
 
@@ -52,4 +65,6 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         ent_embs_out[:n_ent, :] = ent_embs
         rel_embs_out[:n_ent, :n_ent, :] = rel_embs
 
-        writer.put(image_id, [ent_embs_out, rel_embs_out])
+        if writer_thread is not None: writer_thread.join()
+        writer_thread = WriterThread(writer, image_id, [ent_embs_out, rel_embs_out])
+        writer.start()
