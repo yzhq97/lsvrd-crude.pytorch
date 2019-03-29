@@ -3,7 +3,7 @@ import math
 import torch
 import numpy as np
 import torch.nn as nn
-from tqdm import tqdm
+from tqdm import tqdm, trange
 from lib.data.dataset import box_union
 from threading import Thread
 
@@ -22,6 +22,15 @@ def get_triple_boxes(boxes):
 
     return sbj_boxes, obj_boxes, rel_boxes
 
+class LoaderThread(Thread):
+    def __init__(self, loader, image_id, output):
+        super(LoaderThread, self).__init__()
+        self.loader = loader
+        self.image_id = image_id
+        self.output = output
+    def run(self):
+        self.output = self.loader[self.image_id]
+
 class WriterThread(Thread):
     def __init__(self, writer, image_id, data):
         super(WriterThread, self).__init__()
@@ -31,16 +40,26 @@ class WriterThread(Thread):
     def run(self):
         self.writer.put(self.image_id, self.data)
 
-
 def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
 
+    tasks = all_ent_boxes.items()
+    n_tasks = len(tasks)
+
+    loaded = None
+    loader_thread = LoaderThread(loader, tasks[0][0], loaded)
+    loader_thread.start()
     writer_thread = None
 
-    for image_id, ent_boxes in tqdm(all_ent_boxes.items()):
+    for i in trange(n_tasks):
 
+        image_id, ent_boxes = tasks[i]
         n_ent = len(ent_boxes)
 
-        feature_map = torch.tensor(loader[image_id]).float().cuda()
+        loader_thread.join()
+        feature_map = torch.tensor(loaded).float().cuda()
+        if i + 1 < n_tasks:
+            loader_thread = LoaderThread(loader, tasks[i+1][0], loaded)
+            loader_thread.start()
         ent_embs = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
         ent_embs = ent_embs.data.cpu().numpy()
 
@@ -67,4 +86,4 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
 
         if writer_thread is not None: writer_thread.join()
         writer_thread = WriterThread(writer, image_id, [ent_embs_out, rel_embs_out])
-        writer.start()
+        writer_thread.start()
