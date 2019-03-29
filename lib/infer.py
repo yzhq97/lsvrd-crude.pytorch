@@ -45,7 +45,6 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
             batch_rel = rel_boxes[i * args.batch_size: (i + 1) * args.batch_size]
             batch_rel_embs = vision_model.infer_rel(feature_map, batch_sbj, batch_obj, batch_rel)
             rel_embs.append(batch_rel_embs.data.cpu().numpy())
-        rel_embs = [ _.expand_dims(0) for _ in rel_embs ]
         rel_embs = np.concatenate(rel_embs, axis=0).reshape([n_ent, n_ent, cfg.vision_model.emb_dim])
 
         ent_embs_out = np.zeros([args.max_entities, cfg.vision_model.emb_dim])
