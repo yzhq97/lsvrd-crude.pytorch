@@ -28,7 +28,6 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         n_ent = len(ent_boxes)
 
         feature_map = torch.tensor(loader[image_id]).float().cuda()
-        print(feature_map.size())
         ent_embs = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
         ent_embs = ent_embs.data.cpu().numpy()
 
@@ -36,7 +35,7 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         sbj_boxes = torch.tensor(sbj_boxes).float().cuda()
         obj_boxes = torch.tensor(obj_boxes).float().cuda()
         rel_boxes = torch.tensor(rel_boxes).float().cuda()
-        batch_fm = feature_map.unsqueeze(0).repeat(args.batch_size, 1, 1, 1)
+        batch_fm = feature_map.repeat(args.batch_size, 1, 1, 1)
 
         n_boxes = len(rel_boxes)
         n_batches = int(math.ceil(n_boxes / args.batch_size))

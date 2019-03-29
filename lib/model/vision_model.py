@@ -53,7 +53,7 @@ class VisionModel(nn.Module):
     def infer_ent(self, image, boxes):
 
         N = boxes.size(0)
-        feature_maps = self.backbone(image.unsqueeze(0))
+        feature_maps = self.backbone(image)
 
         box_ind = torch.zeros(N, dtype=torch.int, device=feature_maps.device)
         ent_features = self.ent_crop_and_resize(feature_maps, boxes, box_ind)
