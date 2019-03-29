@@ -29,7 +29,7 @@ class LoaderThread(Thread):
         self.image_id = image_id
         self.output = output
     def run(self):
-        self.output = self.loader[self.image_id]
+        self.output.append(self.loader[self.image_id])
 
 class WriterThread(Thread):
     def __init__(self, writer, image_id, data):
@@ -45,7 +45,7 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
     tasks = list(all_ent_boxes.items())
     n_tasks = len(tasks)
 
-    loaded = None
+    loaded = []
     loader_thread = LoaderThread(loader, tasks[0][0], loaded)
     loader_thread.start()
     writer_thread = None
@@ -56,8 +56,9 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         n_ent = len(ent_boxes)
 
         loader_thread.join()
-        feature_map = torch.tensor(loaded).float().cuda()
+        feature_map = torch.tensor(loaded[0]).float().cuda()
         if task_idx + 1 < n_tasks:
+            loaded = []
             loader_thread = LoaderThread(loader, tasks[task_idx+1][0], loaded)
             loader_thread.start()
 
