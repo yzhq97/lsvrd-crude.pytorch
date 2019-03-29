@@ -21,7 +21,7 @@ default_args = edict({
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--item', type=str, help="item to tune, e.g. 'learning_rate'")
-    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-7-GRU-300d-1layer-256-128-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json')
+    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-7-GRU-300d-1layer-256-128-0.4-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json')
     parser.add_argument('--gpus', type=str, help="comma separated gpu_ids to use, e.g. '2,5,6'")
     parser.add_argument('--n_p', type=int, help="number of concurrent processes")
     args = parser.parse_args()
