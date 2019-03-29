@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from lib.utils import Logger, TFBLogger, plot_grad_flow
 from lib.evaluate import get_sym_emb, accuracy
 
-def train(word_emb, vision_model, language_model, ent_loss, rel_loss,
+def train(word_emb, vision_model, language_model, ent_loss_model, rel_loss_model,
           train_loader, val_loader, word_dict, ent_dict, pred_dict,
           n_epochs, val_freq, out_dir, cfg, grad_freq=0):
 
@@ -70,9 +70,9 @@ def train(word_emb, vision_model, language_model, ent_loss, rel_loss,
             rel_t_emb = language_model(word_emb(rel_tokens), rel_seq_lens)
             sbj_v_emb, obj_v_emb, rel_v_emb = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 
-            sbj_loss = ent_loss(sbj_v_emb, sbj_t_emb)
-            obj_loss = ent_loss(obj_v_emb, obj_t_emb)
-            rel_loss = rel_loss(rel_v_emb, rel_t_emb)
+            sbj_loss = ent_loss_model(sbj_v_emb, sbj_t_emb)
+            obj_loss = ent_loss_model(obj_v_emb, obj_t_emb)
+            rel_loss = rel_loss_model(rel_v_emb, rel_t_emb)
 
             loss = sbj_loss + obj_loss + rel_loss
 

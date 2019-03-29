@@ -14,6 +14,7 @@ class EntityNet (nn.Module):
             nn.ReLU()
         ]
         current_size = crop_size
+
         while current_size > 3:
             l1_layers.extend([
                 nn.Conv2d(hid_dim, hid_dim, kernel_size=3),
@@ -21,6 +22,7 @@ class EntityNet (nn.Module):
                 nn.ReLU()
             ])
             current_size = current_size - 2
+        
         l1_layers.extend([
             nn.Conv2d(hid_dim, emb_dim, kernel_size=3),
             nn.BatchNorm2d(emb_dim),
