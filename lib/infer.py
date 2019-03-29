@@ -36,16 +36,13 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         obj_boxes = torch.tensor(obj_boxes).float().cuda()
         rel_boxes = torch.tensor(rel_boxes).float().cuda()
 
-        print(n_ent)
-        print(len(rel_boxes))
-
         n_boxes = len(rel_boxes)
         n_batches = int(math.ceil(n_boxes / args.batch_size))
         rel_embs = []
         for i in range(n_batches):
-            batch_sbj = sbj_boxes[i * args.batch_size, (i + 1) * args.batch_size]
-            batch_obj = obj_boxes[i * args.batch_size, (i + 1) * args.batch_size]
-            batch_rel = rel_boxes[i * args.batch_size, (i + 1) * args.batch_size]
+            batch_sbj = sbj_boxes[i * args.batch_size: (i + 1) * args.batch_size]
+            batch_obj = obj_boxes[i * args.batch_size: (i + 1) * args.batch_size]
+            batch_rel = rel_boxes[i * args.batch_size: (i + 1) * args.batch_size]
             batch_rel_embs = vision_model.infer_rel(feature_map, batch_sbj, batch_obj, batch_rel)
             rel_embs.append(batch_rel_embs.data.cpu().numpy())
         rel_embs = np.stack(rel_embs).reshape([n_ent, n_ent, cfg.vision_model.emb_dim])
