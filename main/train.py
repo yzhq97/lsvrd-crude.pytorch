@@ -60,7 +60,8 @@ def train_with_config(args, cfg):
     word_emb.freeze()
     vision_model = VisionModel.build_from_config(cfg.vision_model).cuda()
     language_model = LanguageModel.build_from_config(cfg.language_model).cuda()
-    loss_model = LossModel.build_from_config(cfg.loss_model).cuda()
+    ent_loss = LossModel.build_from_config(cfg.ent_loss).cuda()
+    rel_loss = LossModel.build_from_config(cfg.rel_loss).cuda()
 
     n_v_params = count_parameters(vision_model)
     n_l_params = count_parameters(language_model)
@@ -81,7 +82,7 @@ def train_with_config(args, cfg):
                             shuffle=True, num_workers=args.n_workers)
 
     print("training started...")
-    train(word_emb, vision_model, language_model, loss_model,
+    train(word_emb, vision_model, language_model, ent_loss, rel_loss,
           train_loader, val_loader, word_dict, ent_dict, pred_dict,
           args.n_epochs, args.val_freq, out_dir, cfg, args.grad_freq)
 

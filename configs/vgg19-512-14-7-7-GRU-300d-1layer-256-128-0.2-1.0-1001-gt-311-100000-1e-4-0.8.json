@@ -29,9 +29,18 @@
     "dropout": 0.0,
     "word_emb_init": "cache/word_emb_init_300d.npy"
   },
-  "loss_model": {
+  "ent_loss": {
     "similarity_norm": 1.0,
-    "margin": 0.3,
+    "margin": 0.4,
+    "n_neg": 128,
+    "x_tr": true,
+    "x_trsm": false,
+    "y_tr": false,
+    "y_trsm": true
+  },
+  "rel_loss": {
+    "similarity_norm": 1.0,
+    "margin": 0.2,
     "n_neg": 128,
     "x_tr": true,
     "x_trsm": false,
