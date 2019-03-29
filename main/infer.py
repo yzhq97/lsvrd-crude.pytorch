@@ -62,7 +62,7 @@ def infer_with_cfg(args, cfg):
     h5_boxes = [ h5py.File(h5_path)["bboxes"] for h5_path in h5_paths ]
     all_boxes = {}
     rearange_inds = np.argsort([ 1, 0, 3, 2 ])
-    for image_id, meta in tqdm(info.items):
+    for image_id, meta in tqdm(info.items()):
         file_idx = meta["file"]
         idx = meta["idx"]
         n_use = min(meta["objectsNum"], args.max_entities)
