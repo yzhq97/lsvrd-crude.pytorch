@@ -48,6 +48,8 @@ def infer_with_cfg(args, cfg):
     with torch.no_grad():
         vision_model = VisionModel.build_from_config(cfg.vision_model)
         vision_model = vision_model.cuda()
+        checkpoint = torch.load(args.checkpoint)
+        vision_model.load_state_dict(checkpoint)
         vision_model.train(False)
         vision_model.eval()
     n_v_params = count_parameters(vision_model)
