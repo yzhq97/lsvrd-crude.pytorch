@@ -50,16 +50,17 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
     loader_thread.start()
     writer_thread = None
 
-    for i in trange(n_tasks):
+    for task_idx in trange(n_tasks):
 
-        image_id, ent_boxes = tasks[i]
+        image_id, ent_boxes = tasks[task_idx]
         n_ent = len(ent_boxes)
 
         loader_thread.join()
         feature_map = torch.tensor(loaded).float().cuda()
-        if i + 1 < n_tasks:
-            loader_thread = LoaderThread(loader, tasks[i+1][0], loaded)
+        if task_idx + 1 < n_tasks:
+            loader_thread = LoaderThread(loader, tasks[task_idx+1][0], loaded)
             loader_thread.start()
+
         ent_embs = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
         ent_embs = ent_embs.data.cpu().numpy()
 
