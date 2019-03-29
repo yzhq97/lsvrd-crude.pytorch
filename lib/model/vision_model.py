@@ -38,7 +38,7 @@ class VisionModel(nn.Module):
         N = images.size(0)
         feature_maps = self.backbone(images)
 
-        box_ind = torch.arange(N, dtype=torch.int).cuda()
+        box_ind = torch.arange(N, dtype=torch.int, device=images.device)
         ent_box_ind = box_ind.repeat(2)
         ent_boxes = torch.cat([sbj_boxes, obj_boxes], dim=0)
         ent_features = self.ent_crop_and_resize(feature_maps, ent_boxes, ent_box_ind)
@@ -55,7 +55,7 @@ class VisionModel(nn.Module):
         N = boxes.size(0)
         feature_maps = self.backbone(image.unsqueeze(0))
 
-        box_ind = torch.zeros(N, dtype=torch.int).cuda()
+        box_ind = torch.zeros(N, dtype=torch.int, device=feature_maps.device)
         ent_features = self.ent_crop_and_resize(feature_maps, boxes, box_ind)
         ent_embs, ent_inters = self.ent_net(ent_features)
 

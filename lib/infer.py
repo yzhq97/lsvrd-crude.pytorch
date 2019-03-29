@@ -28,6 +28,7 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         n_ent = len(ent_boxes)
 
         feature_map = torch.tensor(loader[image_id]).float().cuda()
+        print(feature_map.size())
         ent_embs = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
         ent_embs = ent_embs.data.cpu().numpy()
 
