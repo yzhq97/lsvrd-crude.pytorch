@@ -21,17 +21,17 @@ def get_triple_boxes(boxes):
 
     return sbj_boxes, obj_boxes, rel_boxes
 
-def infer(vision_model, ent_boxes, loader, writer, args, cfg):
+def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
 
-    for image_id, boxes in tqdm(ent_boxes.items()):
+    for image_id, ent_boxes in tqdm(all_ent_boxes.items()):
 
-        n_ent = len(boxes)
+        n_ent = len(ent_boxes)
 
         feature_map = torch.tensor(loader[image_id]).float().cuda()
-        ent_embs = vision_model.infer_ent(feature_map, boxes)
+        ent_embs = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
         ent_embs = ent_embs.data.cpu().numpy()
 
-        sbj_boxes, obj_boxes, rel_boxes = get_triple_boxes(boxes)
+        sbj_boxes, obj_boxes, rel_boxes = get_triple_boxes(ent_boxes)
         sbj_boxes = torch.tensor(sbj_boxes).float().cuda()
         obj_boxes = torch.tensor(obj_boxes).float().cuda()
         rel_boxes = torch.tensor(rel_boxes).float().cuda()

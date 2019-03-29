@@ -61,7 +61,7 @@ def infer_with_cfg(args, cfg):
     h5_paths = [ os.path.join(args.gqa_objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]
     h5_boxes = [ h5py.File(h5_path)["bboxes"] for h5_path in h5_paths ]
     all_boxes = {}
-    rearange_inds = np.argsort([ 1, 0, 3, 2 ])
+    rearange_inds = np.argsort([ 1, 0, 3, 2 ]) # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
     for image_id, meta in tqdm(info.items()):
         file_idx = meta["file"]
         idx = meta["idx"]
