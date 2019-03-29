@@ -87,8 +87,8 @@ class VisionModel(nn.Module):
 
         ent_crop_and_resize = CropAndResizeFunction(cfg.ent_crop_size, cfg.ent_crop_size)
         rel_crop_and_resize = CropAndResizeFunction(cfg.rel_crop_size, cfg.rel_crop_size)
-        ent_net = EntityNet(cfg.feature_dim, cfg.ent_crop_size, cfg.emb_dim)
-        rel_net = RelationNet(cfg.feature_dim, cfg.rel_crop_size, cfg.emb_dim)
+        ent_net = EntityNet(cfg.feature_dim, cfg.ent_crop_size, cfg.emb_dim, cfg.hid_dim)
+        rel_net = RelationNet(cfg.feature_dim, cfg.rel_crop_size, cfg.emb_dim, cfg.hid_dim)
 
         model = cls(backbone, ent_crop_and_resize, rel_crop_and_resize, ent_net, rel_net)
 

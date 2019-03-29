@@ -4,11 +4,10 @@ import torch.nn.functional as F
 
 class RelationNet (nn.Module):
 
-    def __init__(self, in_dim, crop_size, emb_dim):
+    def __init__(self, in_dim, crop_size, emb_dim, hid_dim):
         super(RelationNet, self).__init__()
         assert crop_size >= 3 and crop_size % 2 == 1
 
-        hid_dim = int(emb_dim)
         l1_layers = [
             nn.Conv2d(in_dim, hid_dim, kernel_size=1),
             nn.BatchNorm2d(hid_dim),
