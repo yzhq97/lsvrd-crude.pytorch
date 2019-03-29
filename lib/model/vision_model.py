@@ -53,13 +53,16 @@ class VisionModel(nn.Module):
     def infer_rel(self, image, sbj_boxes, obj_boxes, rel_boxes):
 
         N = rel_boxes.size(0)
-        feature_maps = self.backbone(image)
+        feature_map = self.backbone(image) # [ 1, C, H, W ]
 
-        box_ind = torch.zeros(N, dtype=torch.int, device=image.device)
-        ent_box_ind = box_ind.repeat(2)
+        box_ind = torch.zeros(N, dtype=torch.int, device=feature_map.device) # [ N ]
+        ent_box_ind = box_ind.repeat(2) # [ 2N ]
         ent_boxes = torch.cat([sbj_boxes, obj_boxes], dim=0)
-        ent_features = self.ent_crop_and_resize(feature_maps, ent_boxes, ent_box_ind)
-        rel_features = self.rel_crop_and_resize(feature_maps, rel_boxes, box_ind)
+        ent_features = self.ent_crop_and_resize(feature_map, ent_boxes, ent_box_ind)
+        rel_features = self.rel_crop_and_resize(feature_map, rel_boxes, box_ind)
+
+        print(ent_features.size())
+        print(rel_features.size())
 
         sbj_emb, sbj_inter = self.ent_net(ent_features[:N])
         obj_emb, obj_inter = self.ent_net(ent_features[N:])
