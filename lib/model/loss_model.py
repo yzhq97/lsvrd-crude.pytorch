@@ -29,7 +29,7 @@ class LossModel(nn.Module):
     def forward(self, v_emb, l_emb):
 
         s = self.similarity(v_emb, l_emb)
-        loss = torch.tensor(0.0)
+        loss = torch.tensor(0.0, device=s.device)
         if self.x_tr: loss = loss + self.triplet_loss(s.t())
         if self.x_trsm: loss = loss + self.triplet_softmax_loss(s.t().mul(self.similarity_norm))
         if self.y_tr: loss = loss + self.triplet_loss(s)
