@@ -56,7 +56,7 @@ def infer_with_cfg(args, cfg):
     print("vision model: {:,} parameters".format(n_v_params))
 
     print("loading boxes from gqa_objects_dir")
-    info_path = os.path.join(args.gqa_objects_dir, "info.json")
+    info_path = os.path.join(args.gqa_objects_dir, "gqa_objects_info.json")
     info = json.load(open(info_path))
     h5_paths = [ os.path.join(args.gqa_objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]
     h5_boxes = [ h5py.File(h5_path)["bboxes"] for h5_path in h5_paths ]
