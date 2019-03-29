@@ -50,13 +50,30 @@ class VisionModel(nn.Module):
 
         return sbj_emb, obj_emb, rel_emb
 
+    def infer_rel(self, image, sbj_boxes, obj_boxes, rel_boxes):
+
+        N = rel_boxes.size(0)
+        feature_maps = self.backbone(image)
+
+        box_ind = torch.zeros(N, dtype=torch.int, device=image.device)
+        ent_box_ind = box_ind.repeat(2)
+        ent_boxes = torch.cat([sbj_boxes, obj_boxes], dim=0)
+        ent_features = self.ent_crop_and_resize(feature_maps, ent_boxes, ent_box_ind)
+        rel_features = self.rel_crop_and_resize(feature_maps, rel_boxes, box_ind)
+
+        sbj_emb, sbj_inter = self.ent_net(ent_features[:N])
+        obj_emb, obj_inter = self.ent_net(ent_features[N:])
+        rel_emb = self.rel_net(rel_features, sbj_emb, sbj_inter, obj_emb, obj_inter)
+
+        return rel_emb
+
     def infer_ent(self, image, boxes):
 
         N = boxes.size(0)
-        feature_maps = self.backbone(image)
+        feature_map = self.backbone(image)
 
-        box_ind = torch.zeros(N, dtype=torch.int, device=feature_maps.device)
-        ent_features = self.ent_crop_and_resize(feature_maps, boxes, box_ind)
+        box_ind = torch.zeros(N, dtype=torch.int, device=feature_map.device)
+        ent_features = self.ent_crop_and_resize(feature_map, boxes, box_ind)
         ent_embs, ent_inters = self.ent_net(ent_features)
 
         return ent_embs
