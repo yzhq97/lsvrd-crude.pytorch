@@ -42,7 +42,7 @@ class WriterThread(Thread):
 
 def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
 
-    tasks = all_ent_boxes.items()
+    tasks = list(all_ent_boxes)
     n_tasks = len(tasks)
 
     loaded = None
