@@ -88,7 +88,8 @@ def infer_with_cfg(args, cfg):
     emb_dim = cfg.vision_model.emb_dim
     fields = [
         { "name": "entities", "shape": [ n_ent, emb_dim ], "dtype": "float32" },
-        { "name": "relations", "shape": [ n_ent, n_ent, emb_dim ], "dtype": "float32" }
+        { "name": "relations", "shape": [ n_ent, n_ent, emb_dim ], "dtype": "float32" },
+        { "name": "n_ent", "shape": [ 1 ], "dtype": "int32" }
     ]
     writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
 

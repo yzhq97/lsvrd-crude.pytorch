@@ -87,5 +87,5 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         rel_embs_out[:n_ent, :n_ent, :] = rel_embs
 
         if writer_thread is not None: writer_thread.join()
-        writer_thread = WriterThread(writer, image_id, [ent_embs_out, rel_embs_out])
+        writer_thread = WriterThread(writer, image_id, [ent_embs_out, rel_embs_out, n_ent])
         writer_thread.start()
