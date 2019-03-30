@@ -84,12 +84,12 @@ def infer_with_cfg(args, cfg):
     loader = H5DataLoader.load_from_directory(cfg.vision_model.cache_dir, fields, image_ids)
 
     print("creating h5 writer")
-    n_ent = args.max_entities
+    max_ent = args.max_entities
     emb_dim = cfg.vision_model.emb_dim
     fields = [
-        { "name": "entities", "shape": [ n_ent, emb_dim ], "dtype": "float32" },
-        { "name": "relations", "shape": [ n_ent, n_ent, emb_dim ], "dtype": "float32" },
-        { "name": "n_ent", "shape": [ 1 ], "dtype": "int32" }
+        { "name": "entities", "shape": [ max_ent, emb_dim ], "dtype": "float32" },
+        { "name": "relations", "shape": [ max_ent, max_ent, emb_dim ], "dtype": "float32" },
+        { "name": "n_ent", "shape": [], "dtype": "int32" }
     ]
     writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
 
