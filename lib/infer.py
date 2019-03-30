@@ -40,7 +40,7 @@ class WriterThread(Thread):
     def run(self):
         self.writer.put(self.image_id, self.data)
 
-def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
+def infer(vision_model, all_ent_boxes, loader, writer, h5s, info, args, cfg):
 
     tasks = list(all_ent_boxes.items())
     n_tasks = len(tasks)
@@ -54,6 +54,9 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
 
         image_id, ent_boxes = tasks[task_idx]
         n_ent = len(ent_boxes)
+
+        file_idx = info[image_id]["file"]
+        ds_idx = info[image_id]["idx"]
 
         loader_thread.join()
         feature_map = torch.tensor(loaded[0]).float().cuda()
@@ -87,5 +90,6 @@ def infer(vision_model, all_ent_boxes, loader, writer, args, cfg):
         rel_embs_out[:n_ent, :n_ent, :] = rel_embs
 
         if writer_thread is not None: writer_thread.join()
-        writer_thread = WriterThread(writer, image_id, [ent_embs_out, rel_embs_out, n_ent])
+        writer_thread = WriterThread(writer, image_id, [h5s[file_idx][ds_idx, :args.max_entities, :],
+                                                        ent_embs_out, rel_embs_out, n_ent])
         writer_thread.start()

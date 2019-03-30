@@ -59,7 +59,9 @@ def infer_with_cfg(args, cfg):
     info_path = os.path.join(args.gqa_objects_dir, "gqa_objects_info.json")
     info = json.load(open(info_path))
     h5_paths = [ os.path.join(args.gqa_objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]
-    h5_boxes = [ h5py.File(h5_path)["bboxes"] for h5_path in h5_paths ]
+    h5s = [ h5py.File(h5_path) for h5_path in h5_paths ]
+    h5_boxes = [ h5["bboxes"] for h5 in h5s ]
+    h5_features = [ h5["features"] for h5 in h5s]
     all_boxes = {}
     rearange_inds = np.argsort([ 1, 0, 3, 2 ]) # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
     for image_id, meta in tqdm(info.items()):
@@ -87,6 +89,7 @@ def infer_with_cfg(args, cfg):
     max_ent = args.max_entities
     emb_dim = cfg.vision_model.emb_dim
     fields = [
+        { "name": "frcnn_entities", "shape": [max_ent, 2048], "dtype": "float32"},
         { "name": "entities", "shape": [ max_ent, emb_dim ], "dtype": "float32" },
         { "name": "relations", "shape": [ max_ent, max_ent, emb_dim ], "dtype": "float32" },
         { "name": "n_ent", "shape": [], "dtype": "int32" }
@@ -94,7 +97,7 @@ def infer_with_cfg(args, cfg):
     writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
 
     print("inference started")
-    infer(vision_model, all_boxes, loader, writer, args, cfg)
+    infer(vision_model, all_boxes, loader, writer, h5_features, info, args, cfg)
     writer.close()
 
 if __name__ == "__main__":
