@@ -89,7 +89,7 @@ def infer(vision_model, all_ent_boxes, loader, writer, h5s, info, args, cfg):
         ent_embs_out[:n_ent, :] = ent_embs
         rel_embs_out[:n_ent, :n_ent, :] = rel_embs
 
-        adj_mat = np.zeros([args.max_entities, args.max_entities], dtype="int32")
+        adj_mat = np.zeros([args.max_entities, args.max_entities], dtype="uint8")
         adj_mat[:n_ent, :n_ent] = 1
 
         if writer_thread is not None: writer_thread.join()
