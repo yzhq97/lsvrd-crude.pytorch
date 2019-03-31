@@ -92,7 +92,7 @@ def infer_with_cfg(args, cfg):
         { "name": "frcnn_entities", "shape": [max_ent, 2048], "dtype": "float32"},
         { "name": "entities", "shape": [ max_ent, emb_dim ], "dtype": "float32" },
         { "name": "relations", "shape": [ max_ent, max_ent, emb_dim ], "dtype": "float32" },
-        { "name": "adj_mat", "shape": [ max_ent, max_ent ], "dtype": "int32" }
+        { "name": "adj_mat", "shape": [ max_ent, max_ent ], "dtype": "uint8" }
     ]
     writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
 
