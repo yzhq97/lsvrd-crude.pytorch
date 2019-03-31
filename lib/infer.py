@@ -55,9 +55,6 @@ def infer(vision_model, all_ent_boxes, loader, writer, h5s, info, args, cfg):
         image_id, ent_boxes = tasks[task_idx]
         n_ent = len(ent_boxes)
 
-        file_idx = info[image_id]["file"]
-        ds_idx = info[image_id]["idx"]
-
         loader_thread.join()
         feature_map = torch.tensor(loaded[0]).float().cuda()
         if task_idx + 1 < n_tasks:
@@ -89,7 +86,9 @@ def infer(vision_model, all_ent_boxes, loader, writer, h5s, info, args, cfg):
         ent_embs_out[:n_ent, :] = ent_embs
         rel_embs_out[:n_ent, :n_ent, :] = rel_embs
 
+        adj_mat = np.zeros([args.max_entities, args.max_entities], dtype="int32")
+        adj_mat[:n_ent, :n_ent] = 1
+
         if writer_thread is not None: writer_thread.join()
-        writer_thread = WriterThread(writer, image_id, [h5s[file_idx][ds_idx, :args.max_entities, :],
-                                                        ent_embs_out, rel_embs_out, n_ent])
+        writer_thread = WriterThread(writer, image_id, [ent_embs_out, rel_embs_out, adj_mat])
         writer_thread.start()

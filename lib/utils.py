@@ -105,7 +105,6 @@ class Logger(object):
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-
 def plot_grad_flow(named_parameters, plt, epoch, batch):
     '''Plots the gradients flowing through different layers in the net during training.
     Can be used for checking for possible gradient vanishing / exploding problems.
