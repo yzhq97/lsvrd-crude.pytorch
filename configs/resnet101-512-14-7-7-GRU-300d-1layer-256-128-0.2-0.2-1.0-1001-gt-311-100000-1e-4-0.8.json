@@ -14,7 +14,7 @@
     "feature_dim": 2048,
     "pre_extract": true,
     "image_dir": "data/gqa/images",
-    "cache_dir": "data/gqa/resnet101_14x14",
+    "cache_dir": "cache/gqa/resnet101_14x14",
     "emb_dim": 512,
     "hid_dim": 512,
     "ent_crop_size": 7,
