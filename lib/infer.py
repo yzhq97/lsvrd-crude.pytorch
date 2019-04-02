@@ -93,7 +93,7 @@ def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args
         _, labels = s.max(dim=1)
         rel_mat = labels.reshape([n_ent, n_ent])
         rel_mat_out = -np.ones([args.max_entities, args.max_entities], dtype="int32")
-        rel_mat_out[:n_ent, n_ent] = rel_mat
+        rel_mat_out[:n_ent, :n_ent] = rel_mat
 
         rel_emb = rel_emb.reshape([n_ent, n_ent, cfg.vision_model.emb_dim])
         rel_emb_out = np.zeros([args.max_entities, args.max_entities, cfg.vision_model.emb_dim])
