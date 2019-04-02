@@ -38,7 +38,7 @@ class WriterThread(Thread):
         self.writer = writer
         self.image_id = image_id
         self.h5s = h5s
-        self.info = info
+        self.info = info[image_id]
         self.max_ent = max_ent
         self.rel_emb = rel_emb
         self.rel_mat = rel_mat
