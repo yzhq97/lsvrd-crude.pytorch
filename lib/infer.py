@@ -6,6 +6,7 @@ import torch.nn as nn
 from tqdm import tqdm, trange
 from lib.data.dataset import box_union
 from threading import Thread
+from lib.module.similarity_model import PairwiseCosineSimilarity
 
 def get_triple_boxes(boxes):
 
@@ -40,10 +41,12 @@ class WriterThread(Thread):
     def run(self):
         self.writer.put(self.image_id, self.data)
 
-def infer(vision_model, all_ent_boxes, loader, writer, h5s, info, args, cfg):
+def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args, cfg):
 
     tasks = list(all_ent_boxes.items())
     n_tasks = len(tasks)
+
+    with torch.no_grad(): similarity = PairwiseCosineSimilarity()
 
     loaded = []
     loader_thread = LoaderThread(loader, tasks[0][0], loaded)
@@ -65,8 +68,8 @@ def infer(vision_model, all_ent_boxes, loader, writer, h5s, info, args, cfg):
             loader_thread = LoaderThread(loader, tasks[task_idx+1][0], loaded)
             loader_thread.start()
 
-        ent_embs = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
-        ent_embs = ent_embs.data.cpu().numpy()
+        ent_emb = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
+        ent_emb = ent_emb.data.cpu().numpy()
 
         sbj_boxes, obj_boxes, rel_boxes = get_triple_boxes(ent_boxes)
         sbj_boxes = torch.tensor(sbj_boxes).float().cuda()
@@ -75,25 +78,29 @@ def infer(vision_model, all_ent_boxes, loader, writer, h5s, info, args, cfg):
 
         n_boxes = len(rel_boxes)
         n_batches = int(math.ceil(n_boxes / args.batch_size))
-        rel_embs = []
+        rel_emb = []
         for i in range(n_batches):
             batch_sbj = sbj_boxes[i * args.batch_size: (i + 1) * args.batch_size]
             batch_obj = obj_boxes[i * args.batch_size: (i + 1) * args.batch_size]
             batch_rel = rel_boxes[i * args.batch_size: (i + 1) * args.batch_size]
-            batch_rel_embs = vision_model.infer_rel(feature_map, batch_sbj, batch_obj, batch_rel)
-            rel_embs.append(batch_rel_embs.data.cpu().numpy())
-        rel_embs = np.concatenate(rel_embs, axis=0).reshape([n_ent, n_ent, cfg.vision_model.emb_dim])
+            batch_rel_emb = vision_model.infer_rel(feature_map, batch_sbj, batch_obj, batch_rel)
+            rel_emb.append(batch_rel_emb)
+        rel_emb = torch.cat(rel_emb, dim=0)
 
-        ent_embs_out = np.zeros([args.max_entities, cfg.vision_model.emb_dim])
-        rel_embs_out = np.zeros([args.max_entities, args.max_entities, cfg.vision_model.emb_dim])
-        ent_embs_out[:n_ent, :] = ent_embs
-        rel_embs_out[:n_ent, :n_ent, :] = rel_embs
+        s = similarity(rel_emb, pred_emb)
+        labels = s.max(dim=1)
+        rel_mat = labels.reshape([n_ent, n_ent])
 
-        adj_mat = np.zeros([args.max_entities, args.max_entities], dtype="uint8")
-        adj_mat[:n_ent, :n_ent] = 1
-        adj_mat[:n_ent, :n_ent][np.eye(n_ent, dtype=np.bool)] = 0
+        rel_mat_out = -np.ones([args.max_entities, args.max_entities], dtype="int32")
+        rel_mat_out[:n_ent, n_ent] = rel_mat
+
+        ent_emb_out = np.zeros([args.max_entities, cfg.vision_model.emb_dim])
+        rel_emb = rel_emb.reshape([n_ent, n_ent, cfg.vision_model.emb_dim])
+        rel_emb_out = np.zeros([args.max_entities, args.max_entities, cfg.vision_model.emb_dim])
+        ent_emb_out[:n_ent, :] = ent_emb
+        rel_emb_out[:n_ent, :n_ent, :] = rel_emb
 
         if writer_thread is not None: writer_thread.join()
         writer_thread = WriterThread(writer, image_id, [h5s[file_idx][array_idx, :args.max_entities, :],
-                                                        ent_embs_out, rel_embs_out, adj_mat])
+                                                        ent_emb_out, rel_emb_out, adj_mat])
         writer_thread.start()

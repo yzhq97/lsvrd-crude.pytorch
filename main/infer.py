@@ -8,15 +8,19 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from easydict import EasyDict as edict
-from lib.utils import count_parameters
+from lib.data.sym_dict import SymbolDictionary
 from lib.infer import infer
+from lib.evaluate import get_sym_emb
+from lib.utils import count_parameters
 from lib.model.vision_model import VisionModel
+from lib.model.language_model import LanguageModel, WordEmbedding
 from lib.data.h5io import H5DataLoader, H5DataWriter
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, help='model configs')
-    parser.add_argument('--checkpoint', type=str, help='model checkpoint path, e.g. out/model.pth')
+    parser.add_argument('--vckpt', type=str, help='vision model checkpoint path')
+    parser.add_argument('--lckpt', type=str, help='language model checkpoint path')
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--gpu_id', type=int, default=0)
     parser.add_argument('--max_entities', type=int, default=36)
@@ -44,12 +48,32 @@ def infer_with_cfg(args, cfg):
         print("%10s: %s" % (arg, str(getattr(args, arg))))
     print()
 
-    print("building model")
+    word_dict = SymbolDictionary.load_from_file(cfg.word_dict)
+    pred_dict = SymbolDictionary.load_from_file(cfg.pred_dict)
+
+    print("building language model")
+    with torch.no_grad():
+        word_emb = WordEmbedding.build_from_config(cfg.language_model, word_dict).cuda()
+        word_emb.init_embedding(cfg.language_model.word_emb_init)
+        word_emb.freeze()
+        language_model = LanguageModel.build_from_config(cfg.language_model)
+        language_model = language_model.cuda()
+        lckpt = torch.load(args.lckpt)
+        language_model.load_state_dict(lckpt)
+        language_model.train(False)
+        language_model.eval()
+    n_l_params = count_parameters(language_model)
+    print("language model: {:,} parameters".format(n_l_params))
+
+    print("obtaining predicate embeddings")
+    pred_emb = get_sym_emb(word_emb, language_model, word_dict, pred_dict, cfg.language_model.tokens_length)
+
+    print("building vision model")
     with torch.no_grad():
         vision_model = VisionModel.build_from_config(cfg.vision_model)
         vision_model = vision_model.cuda()
-        checkpoint = torch.load(args.checkpoint)
-        vision_model.load_state_dict(checkpoint)
+        vckpt = torch.load(args.vckpt)
+        vision_model.load_state_dict(vckpt)
         vision_model.train(False)
         vision_model.eval()
     n_v_params = count_parameters(vision_model)
@@ -92,12 +116,12 @@ def infer_with_cfg(args, cfg):
         { "name": "frcnn_entities", "shape": [max_ent, 2048], "dtype": "float32"},
         { "name": "entities", "shape": [ max_ent, emb_dim ], "dtype": "float32" },
         { "name": "relations", "shape": [ max_ent, max_ent, emb_dim ], "dtype": "float32" },
-        { "name": "adj_mat", "shape": [ max_ent, max_ent ], "dtype": "uint8" }
+        { "name": "rel_mat", "shape": [ max_ent, max_ent ], "dtype": "int32" }
     ]
     writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
 
     print("inference started")
-    infer(vision_model, all_boxes, loader, writer, h5_features, info, args, cfg)
+    infer(vision_model, all_boxes, pred_emb, loader, writer, h5_features, info, args, cfg)
     writer.close()
 
 if __name__ == "__main__":
