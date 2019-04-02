@@ -102,5 +102,5 @@ def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args
 
         if writer_thread is not None: writer_thread.join()
         writer_thread = WriterThread(writer, image_id, [h5s[file_idx][array_idx, :args.max_entities, :],
-                                                        ent_emb_out, rel_emb_out, adj_mat])
+                                                        ent_emb_out, rel_emb_out, rel_mat])
         writer_thread.start()
