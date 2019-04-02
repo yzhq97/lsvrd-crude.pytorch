@@ -68,8 +68,7 @@ def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args
             loader_thread = LoaderThread(loader, tasks[task_idx+1][0], loaded)
             loader_thread.start()
 
-        ent_emb = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
-        ent_emb = ent_emb.data.cpu().numpy()
+        # ent_emb = vision_model.infer_ent(feature_map, torch.tensor(ent_boxes).float().cuda())
 
         sbj_boxes, obj_boxes, rel_boxes = get_triple_boxes(ent_boxes)
         sbj_boxes = torch.tensor(sbj_boxes).float().cuda()
@@ -87,20 +86,21 @@ def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args
             rel_emb.append(batch_rel_emb)
         rel_emb = torch.cat(rel_emb, dim=0)
 
+        # ent_emb_out = np.zeros([args.max_entities, cfg.vision_model.emb_dim])
+        # ent_emb_out[:n_ent, :] = ent_emb
+
         s = similarity(rel_emb, pred_emb)
         labels = s.max(dim=1)
         rel_mat = labels.reshape([n_ent, n_ent])
-
         rel_mat_out = -np.ones([args.max_entities, args.max_entities], dtype="int32")
         rel_mat_out[:n_ent, n_ent] = rel_mat
 
-        ent_emb_out = np.zeros([args.max_entities, cfg.vision_model.emb_dim])
         rel_emb = rel_emb.reshape([n_ent, n_ent, cfg.vision_model.emb_dim])
         rel_emb_out = np.zeros([args.max_entities, args.max_entities, cfg.vision_model.emb_dim])
-        ent_emb_out[:n_ent, :] = ent_emb
         rel_emb_out[:n_ent, :n_ent, :] = rel_emb
 
         if writer_thread is not None: writer_thread.join()
-        writer_thread = WriterThread(writer, image_id, [h5s[file_idx][array_idx, :args.max_entities, :],
-                                                        ent_emb_out, rel_emb_out, rel_mat])
+        writer_thread = WriterThread(writer, image_id,
+                                     [h5s[file_idx][array_idx, :args.max_entities, :],
+                                      rel_emb_out, rel_mat])
         writer_thread.start()
