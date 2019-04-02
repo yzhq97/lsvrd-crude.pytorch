@@ -79,7 +79,7 @@ def infer_with_cfg(args, cfg):
     n_v_params = count_parameters(vision_model)
     print("vision model: {:,} parameters".format(n_v_params))
 
-    print("loading boxes from gqa_objects_dir")
+    print("getting boxes from gqa_objects_dir")
     info_path = os.path.join(args.gqa_objects_dir, "gqa_objects_info.json")
     info = json.load(open(info_path))
     h5_paths = [ os.path.join(args.gqa_objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]

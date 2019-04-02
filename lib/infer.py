@@ -90,7 +90,7 @@ def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args
         # ent_emb_out[:n_ent, :] = ent_emb
 
         s = similarity(rel_emb, pred_emb)
-        labels = s.max(dim=1)
+        _, labels = s.max(dim=1)
         rel_mat = labels.reshape([n_ent, n_ent])
         rel_mat_out = -np.ones([args.max_entities, args.max_entities], dtype="int32")
         rel_mat_out[:n_ent, n_ent] = rel_mat
