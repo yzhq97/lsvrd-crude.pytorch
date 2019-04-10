@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     attr_dict = SymbolDictionary()
     attr_cnt = {}
-    attr_n_cnt = [0] * 20
+    attr_n_cnt = [0] * 40
     attr_len_cnt = [0] * 8
 
     print("    running statistics ...")
