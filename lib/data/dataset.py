@@ -41,7 +41,7 @@ class GQATriplesDataset(Dataset):
     eval = 1
 
     def __init__(self, name, entries,
-                 word_dict, ent_dict, pred_dict, tokens_length,
+                 word_dict, ent_dict, attr_dict, pred_dict, tokens_length, n_attr,
                  image_dir, image_width, image_height,
                  mode, preload,
                  pre_extract=False, cache_dir=None, backbone=None,
@@ -66,8 +66,10 @@ class GQATriplesDataset(Dataset):
 
         self.word_dict = word_dict
         self.ent_dict = ent_dict
+        self.attr_dict = attr_dict
         self.pred_dict = pred_dict
         self.tokens_length = tokens_length
+        self.n_attr = n_attr
 
         self.entries = self.preprocess_entries(entries)
         self.image_dir = image_dir
@@ -171,9 +173,12 @@ class GQATriplesDataset(Dataset):
             # tokenize text
             if self.mode == self.train:
                 sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
+                for i in range(self.n_attr): sbj_text = self.attr_dict[entry.attrs[]]
                 entry.sbj_tokens, entry.sbj_seq_len = self.tokenize(sbj_text)
+
                 obj_text = self.ent_dict.idx2sym[entry.obj_label]
                 entry.obj_tokens, entry.obj_seq_len = self.tokenize(obj_text)
+
                 pred_text = self.pred_dict.idx2sym[entry.pred_label]
                 entry.pred_tokens, entry.pred_seq_len = self.tokenize(pred_text)
 
@@ -189,12 +194,13 @@ class GQATriplesDataset(Dataset):
         return new_entries
 
     @classmethod
-    def create(cls, cfg, word_dict, ent_dict, pred_dict, triples_path, mode, preload):
+    def create(cls, cfg, word_dict, ent_dict, attr_dict, pred_dict, triples_path, mode, preload):
 
         entries = pickle.load(open(triples_path, "rb"))
         return cls(cfg.dataset,
-                   entries, word_dict, ent_dict, pred_dict,
+                   entries, word_dict, ent_dict, pred_dict, attr_dict,
                    cfg.language_model.tokens_length,
+                   cfg.language_model.n_attr,
                    cfg.vision_model.image_dir,
                    cfg.vision_model.image_width,
                    cfg.vision_model.image_height,

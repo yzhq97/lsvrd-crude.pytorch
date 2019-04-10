@@ -161,7 +161,7 @@ if __name__ == "__main__":
     print("generating triples ...")
 
     image_dir = "data/gqa/images"
-    box_source = "gt"
+    box_source = "gt+proposals"
     iou_thresh = 0.75
     out_dir = "cache"
     n_preds = 311
