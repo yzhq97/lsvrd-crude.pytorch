@@ -221,6 +221,7 @@ if __name__ == "__main__":
 
             if box_source == "gt+proposals":
                 n_proposal_boxes = meta["objectsNum"]
+                if n_proposal_boxes == 0: continue
                 file_idx = meta["file"]
                 idx = meta["idx"]
                 proposals = h5_boxes[file_idx][idx, :n_proposal_boxes, :]
