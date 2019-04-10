@@ -113,7 +113,7 @@ def get_triples_from_proposals(proposals, gt_boxes, ent_labels, ent_attrs, rel_m
 
     entries = []
 
-    iou_mat = compute_iou(proposals, gt_boxes)
+    iou_mat = compute_iou_mat(proposals, gt_boxes)
     max_iou = np.max(iou_mat, axis=1)
     argmax_iou = np.argmax(iou_mat, axis=1)
 
