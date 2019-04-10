@@ -99,8 +99,8 @@ def compute_iou_mat(a, b):
     b = np.array(b)
     a_exp = np.expand_dims(a, axis=1)
     b_exp = np.expand_dims(b, axis=0)
-    a_exp = np.repeat(a, len(b), axis=1).reshape([-1, 4])
-    b_exp = np.repeat(b, len(a), axis=0).reshape([-1, 4])
+    a_exp = np.repeat(a_exp, len(b), axis=1).reshape([-1, 4])
+    b_exp = np.repeat(b_exp, len(a), axis=0).reshape([-1, 4])
 
     ious = compute_iou(a_exp, b_exp)
 

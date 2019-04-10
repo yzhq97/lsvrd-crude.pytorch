@@ -127,9 +127,11 @@ class GQATriplesDataset(Dataset):
         if image is None: raise Exception("image %s does not exist" % image_path)
         return image
 
-    def tokenize(self, text):
+    def tokenize(self, text, keep_tail=False):
 
-        tokens = self.word_dict.tokenize(text)[:self.tokens_length]
+        tokens = self.word_dict.tokenize(text)
+        if keep_tail: tokens = tokens[-self.tokens_length:]
+        else: tokens = tokens[:self.tokens_length]
         seq_len = len(tokens)
         tokens = tokens + [ len(self.word_dict) ] * (self.tokens_length - len(tokens))
         return tokens, seq_len
@@ -173,11 +175,14 @@ class GQATriplesDataset(Dataset):
             # tokenize text
             if self.mode == self.train:
                 sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
-                for i in range(self.n_attr): sbj_text = self.attr_dict[entry.attrs[]]
-                entry.sbj_tokens, entry.sbj_seq_len = self.tokenize(sbj_text)
+                for i in range(min(self.n_attr, len(entry.sbj_attrs))):
+                    sbj_text = self.attr_dict[entry.sbj_attrs[i]] + sbj_text
+                entry.sbj_tokens, entry.sbj_seq_len = self.tokenize(sbj_text, keep_tail=True)
 
                 obj_text = self.ent_dict.idx2sym[entry.obj_label]
-                entry.obj_tokens, entry.obj_seq_len = self.tokenize(obj_text)
+                for i in range(min(self.n_attr, len(entry.obj_attrs))):
+                    obj_text = self.attr_dict[entry.obj_attrs[i]] + obj_text
+                entry.obj_tokens, entry.obj_seq_len = self.tokenize(obj_text, keep_tail=True)
 
                 pred_text = self.pred_dict.idx2sym[entry.pred_label]
                 entry.pred_tokens, entry.pred_seq_len = self.tokenize(pred_text)
