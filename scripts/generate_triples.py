@@ -140,7 +140,7 @@ def get_triples_from_proposals(proposals, gt_boxes, ent_labels, ent_attrs, rel_m
                     entries.append(entry)
 
         if sbj_label == 0:
-            for j in range(proposals):
+            for j in range(len(proposals)):
                 if i != j and max_iou[j] < iou_thresh:
                     if random.random() > pred_use_prob[0]: continue
                     entry = {
@@ -233,14 +233,39 @@ if __name__ == "__main__":
         # with open(os.path.join(out_dir, "%s_%s_triples.json" % (split, box_source)), "w") as f:
         #     json.dump(entries, f)
 
-        out_name = split + "_triples"
-        out_name = out_name + "_%s" % box_source
-        if box_source == "gt+proposals": out_name = out_name + "_%.f" % iou_thresh
-        if use_none_label: out_name = out_name + "_use_none"
-        out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
-        out_name = out_name + ".pkl"
-        with open(os.path.join(out_dir, out_name), "wb") as f:
-            pickle.dump(entries, f)
-            print("dumped to %s" % out_name)
+        if split == "train":
+            out_name = split + "_triples"
+            out_name = out_name + "_%s" % box_source
+            if box_source == "gt+proposals": out_name = out_name + "_%.f" % iou_thresh
+            if use_none_label: out_name = out_name + "_use_none"
+            out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
+            out_name = out_name + ".pkl"
+            with open(os.path.join(out_dir, out_name), "wb") as f:
+                pickle.dump(entries, f)
+                print("dumped to %s" % out_name)
+        else:
+            n_val = int(len(entries)/2)
+            val_entries = entries[:n_val]
+            test_entries = entries[n_val:]
+
+            out_name = "val_triples"
+            out_name = out_name + "_%s" % box_source
+            if box_source == "gt+proposals": out_name = out_name + "_%.f" % iou_thresh
+            if use_none_label: out_name = out_name + "_use_none"
+            out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
+            out_name = out_name + ".pkl"
+            with open(os.path.join(out_dir, out_name), "wb") as f:
+                pickle.dump(val_entries, f)
+                print("dumped to %s" % out_name)
+
+            out_name = "test_triples"
+            out_name = out_name + "_%s" % box_source
+            if box_source == "gt+proposals": out_name = out_name + "_%.f" % iou_thresh
+            if use_none_label: out_name = out_name + "_use_none"
+            out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
+            out_name = out_name + ".pkl"
+            with open(os.path.join(out_dir, out_name), "wb") as f:
+                pickle.dump(test_entries, f)
+                print("dumped to %s" % out_name)
 
     print("triple count: %s" % str(triple_cnt))
