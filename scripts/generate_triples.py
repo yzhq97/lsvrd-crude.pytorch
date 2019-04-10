@@ -132,10 +132,10 @@ def get_triples_from_proposals(proposals, gt_boxes, ent_labels, ent_attrs, rel_m
                     "obj_attrs": ent_attrs[j],
                     "pred_label": 0
                 }
-                if use_none_label and (len(rel_mat[i][j]) == 0 or sbj_label == 0):
+                if use_none_label and (len(rel_mat[i_gt][j]) == 0 or sbj_label == 0):
                     if sbj_label != 0 and random.random() > pred_use_prob[0]: continue
                     entries.append(entry)
-                for pred_id in rel_mat[i][j]:
+                for pred_id in rel_mat[i_gt][j]:
                     if random.random() > pred_use_prob[pred_id]: continue
                     entries.append(entry)
 
