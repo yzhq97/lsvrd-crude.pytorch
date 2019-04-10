@@ -49,6 +49,7 @@ if __name__ == "__main__":
 
     attr_dict = SymbolDictionary()
     attr_cnt = {}
+    attr_n_cnt = [0] * 8
     attr_len_cnt = [0] * 8
 
     print("    running statistics ...")
@@ -70,6 +71,7 @@ if __name__ == "__main__":
                     ent_cnt[ent["name"]] = 1
 
                 attrs = ent["attributes"]
+                attr_n_cnt[len(attrs)] += 1
                 for attr in attrs:
                     if attr in attr_cnt:
                         attr_cnt[attr] += 1
@@ -134,6 +136,11 @@ if __name__ == "__main__":
     print()
     print("    ent token length count (by category):")
     for length, number in enumerate(ent_len_cnt):
+        print("%2d %d" % (length, number))
+
+    print()
+    print("    attr count (by category):")
+    for length, number in enumerate(attr_n_cnt):
         print("%2d %d" % (length, number))
 
     print()
