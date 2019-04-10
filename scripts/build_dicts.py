@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     attr_dict = SymbolDictionary()
     attr_cnt = {}
-    attr_n_cnt = [0] * 8
+    attr_n_cnt = [0] * 20
     attr_len_cnt = [0] * 8
 
     print("    running statistics ...")
@@ -139,11 +139,6 @@ if __name__ == "__main__":
         print("%2d %d" % (length, number))
 
     print()
-    print("    attr count (by category):")
-    for length, number in enumerate(attr_n_cnt):
-        print("%2d %d" % (length, number))
-
-    print()
     print("    attr token length count (by category):")
     for length, number in enumerate(attr_len_cnt):
         print("%2d %d" % (length, number))
@@ -151,4 +146,9 @@ if __name__ == "__main__":
     print()
     print("    pred token length count (by category):")
     for length, number in enumerate(pred_len_cnt):
+        print("%2d %d" % (length, number))
+
+    print()
+    print("    attr count (by category):")
+    for length, number in enumerate(attr_n_cnt):
         print("%2d %d" % (length, number))
