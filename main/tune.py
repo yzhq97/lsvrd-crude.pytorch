@@ -105,7 +105,7 @@ def tune_rnn_layers(base_cfg):
     run_configs(args, cfgs)
 
 def tune_n_attrs(base_cfg):
-    values = [ 1, 0, 2, 3 ]
+    values = [ 1 ]
     cfgs = []
     for value in values:
         cfg_exp = edict(deepcopy(base_cfg))
