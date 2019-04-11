@@ -9,6 +9,44 @@ from copy import deepcopy
 from tqdm import tqdm, trange
 from lib.data.sym_dict import SymbolDictionary
 
+def compute_iou(a, b):
+
+    x1a, x2a, y1a, y2a = a[:, 0], a[:, 1], a[:, 2], a[:, 3]
+    x1b, x2b, y1b, y2b = b[:, 0], b[:, 1], b[:, 2], b[:, 3]
+
+    # intersection
+    x1 = np.maximum(x1a, x1b)
+    x2 = np.minimum(x2a, x2b)
+    y1 = np.maximum(y1a, y1b)
+    y2 = np.maximum(y2a, y2b)
+    inter_width = x2 - x1
+    inter_height = y2 - y1
+    inter_width[inter_width < 0] = 0
+    inter_height[inter_height < 0] = 0
+    intersection = inter_height * inter_width
+
+    # union
+    a_area = (x2a - x1a) * (y2a - y1a)
+    b_area = (x2b - x1b) * (y2b - y1b)
+    union = a_area + b_area - intersection
+
+    return intersection / (union + 1e-8)
+
+def compute_iou_mat(a, b):
+
+    a = np.array(a)
+    b = np.array(b)
+    a_exp = np.expand_dims(a, axis=1)
+    b_exp = np.expand_dims(b, axis=0)
+    a_exp = np.repeat(a_exp, len(b), axis=1).reshape([-1, 4])
+    b_exp = np.repeat(b_exp, len(a), axis=0).reshape([-1, 4])
+
+    ious = compute_iou(a_exp, b_exp)
+
+    iou_mat = ious.reshape([len(a), len(b)])
+
+    return iou_mat
+
 def get_entities(scene_graph, ent_dict: SymbolDictionary, attr_dict: SymbolDictionary):
 
     ent_labels = []
@@ -73,45 +111,6 @@ def get_triples_from_gt(gt_boxes, ent_labels, ent_attrs, rel_mat, pred_use_prob,
                         entries.append(entry)
 
     return entries
-
-def compute_iou(a, b):
-
-    x1a, x2a, y1a, y2a = a[:, 0], a[:, 1], a[:, 2], a[:, 3]
-    x1b, x2b, y1b, y2b = b[:, 0], b[:, 1], b[:, 2], b[:, 3]
-
-    # intersection
-    x1 = np.maximum(x1a, x1b)
-    x2 = np.minimum(x2a, x2b)
-    y1 = np.maximum(y1a, y1b)
-    y2 = np.maximum(y2a, y2b)
-    inter_width = x2 - x1
-    inter_height = y2 - y1
-    inter_width[inter_width < 0] = 0
-    inter_height[inter_height < 0] = 0
-    intersection = inter_height * inter_width
-
-    # union
-    a_area = (x2a - x1a) * (y2a - y1a)
-    b_area = (x2b - x1b) * (y2b - y1b)
-    union = a_area + b_area - intersection
-
-    return intersection / (union + 1e-8)
-
-def compute_iou_mat(a, b):
-
-    a = np.array(a)
-    b = np.array(b)
-    a_exp = np.expand_dims(a, axis=1)
-    b_exp = np.expand_dims(b, axis=0)
-    a_exp = np.repeat(a_exp, len(b), axis=1).reshape([-1, 4])
-    b_exp = np.repeat(b_exp, len(a), axis=0).reshape([-1, 4])
-
-    ious = compute_iou(a_exp, b_exp)
-
-    iou_mat = ious.reshape([len(a), len(b)])
-
-    return iou_mat
-
 
 def get_triples_from_proposals(proposals, gt_boxes, ent_labels, ent_attrs, rel_mat, pred_use_prob, use_none_label, iou_thresh):
 
@@ -235,7 +234,8 @@ if __name__ == "__main__":
                 file_idx = meta["file"]
                 idx = meta["idx"]
                 proposals = h5_boxes[file_idx][idx, :n_proposal_boxes, :]
-                proposal_entries = get_triples_from_proposals(proposals, ent_boxes, ent_labels, ent_attrs, rel_mat, pred_use_prob, use_none_label, iou_thresh)
+                proposal_entries = get_triples_from_proposals(proposals, ent_boxes, ent_labels, ent_attrs, rel_mat,
+                                                              pred_use_prob, use_none_label, iou_thresh)
                 for entry in proposal_entries:
                     entry["image_id"] = image_id
                     entry["width"] = meta["width"]
