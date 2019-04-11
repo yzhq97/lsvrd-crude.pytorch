@@ -61,8 +61,7 @@ def get_entities(scene_graph, ent_dict: SymbolDictionary, attr_dict: SymbolDicti
         idx2eid.append(eid)
         ent_labels.append(ent_dict.sym2idx[entity["name"]])
         ent_boxes.append((entity["x"], entity["y"], entity["x"]+entity["w"], entity["y"]+entity["h"]))
-        attributes = [attr_dict.sym2idx[attr] for attr in entity["attributes"]]
-        ent_attrs.append(attributes)
+        ent_attrs.append([attr_dict.sym2idx[attr] for attr in entity["attributes"]])
 
     return ent_labels, ent_attrs, ent_boxes, eid2idx, idx2eid
 

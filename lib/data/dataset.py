@@ -206,7 +206,7 @@ class GQATriplesDataset(Dataset):
 
         entries = pickle.load(open(triples_path, "rb"))
         return cls(cfg.dataset,
-                   entries, word_dict, ent_dict, pred_dict, attr_dict,
+                   entries, word_dict, ent_dict, attr_dict, pred_dict,
                    cfg.language_model.tokens_length,
                    cfg.language_model.n_attrs,
                    cfg.vision_model.image_dir,
