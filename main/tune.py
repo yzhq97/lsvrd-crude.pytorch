@@ -15,7 +15,7 @@ default_args = edict({
     "n_workers": 4,
     "seed": 999,
     "val_freq": 1,
-    "grad_freq": 0,
+    "grad_freq": 0
 })
 
 def parse_args():
@@ -24,8 +24,10 @@ def parse_args():
     parser.add_argument('--config', type=str, default='configs/resnet101-512-14-7-7-GRU-300d-1layer-5-0-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json')
     parser.add_argument('--gpus', type=str, help="comma separated gpu_ids to use, e.g. '2,5,6'")
     parser.add_argument('--np', type=int, help="number of concurrent processes")
+    parser.add_argument('--preload', action="store_true")
     args = parser.parse_args()
     args.gpus = args.gpus.split(",")
+    default_args.preload = args.preload
     return args
 
 def get_cfg_name(cfg):

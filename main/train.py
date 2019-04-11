@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument('--out_dir', type=str, default='out')
     parser.add_argument('--grad_freq', type=int, default=100)
     parser.add_argument('--gpu_id', type=int, default=0)
+    parser.add_argument('--preload', action="store_true")
     args = parser.parse_args()
     _, cfg_name = os.path.split(args.config)
     cfg_name, _ = os.path.splitext(cfg_name)
@@ -72,13 +73,13 @@ def train_with_config(args, cfg):
 
     print("loading train data...")
     train_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, attr_dict, pred_dict, cfg.train.triples_path,
-                                         mode="train", preload=cfg.train.preload)
+                                         mode="train", preload=args.preload)
     train_loader = DataLoader(train_set, batch_size=cfg.train.batch_size,
                               shuffle=True, num_workers=args.n_workers)
 
     print("loading val data...")
     val_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, attr_dict, pred_dict, cfg.val.triples_path,
-                                       mode="eval", preload=cfg.val.preload)
+                                       mode="eval", preload=args.preload)
     val_loader = DataLoader(val_set, batch_size=cfg.val.batch_size,
                             shuffle=True, num_workers=args.n_workers)
 
