@@ -41,7 +41,7 @@ class GQATriplesDataset(Dataset):
     eval = 1
 
     def __init__(self, name, entries,
-                 word_dict, ent_dict, attr_dict, pred_dict, tokens_length, n_attr,
+                 word_dict, ent_dict, attr_dict, pred_dict, tokens_length, n_attrs,
                  image_dir, image_width, image_height,
                  mode, preload,
                  pre_extract=False, cache_dir=None, backbone=None,
@@ -69,7 +69,7 @@ class GQATriplesDataset(Dataset):
         self.attr_dict = attr_dict
         self.pred_dict = pred_dict
         self.tokens_length = tokens_length
-        self.n_attr = n_attr
+        self.n_attrs = n_attrs
 
         self.entries = self.preprocess_entries(entries)
         self.image_dir = image_dir
@@ -175,13 +175,13 @@ class GQATriplesDataset(Dataset):
             # tokenize text
             if self.mode == self.train:
                 sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
-                for i in range(min(self.n_attr, len(entry.sbj_attrs))):
-                    sbj_text = self.attr_dict[entry.sbj_attrs[i]] + sbj_text
+                for i in range(min(self.n_attrs, len(entry.sbj_attrs))):
+                    sbj_text = self.attr_dict.idx2sym[entry.sbj_attrs[i]] + " " + sbj_text
                 entry.sbj_tokens, entry.sbj_seq_len = self.tokenize(sbj_text, keep_tail=True)
 
                 obj_text = self.ent_dict.idx2sym[entry.obj_label]
-                for i in range(min(self.n_attr, len(entry.obj_attrs))):
-                    obj_text = self.attr_dict[entry.obj_attrs[i]] + obj_text
+                for i in range(min(self.n_attrs, len(entry.obj_attrs))):
+                    obj_text = self.attr_dict.idx2sym[entry.obj_attrs[i]] + " " + obj_text
                 entry.obj_tokens, entry.obj_seq_len = self.tokenize(obj_text, keep_tail=True)
 
                 pred_text = self.pred_dict.idx2sym[entry.pred_label]
@@ -205,7 +205,7 @@ class GQATriplesDataset(Dataset):
         return cls(cfg.dataset,
                    entries, word_dict, ent_dict, pred_dict, attr_dict,
                    cfg.language_model.tokens_length,
-                   cfg.language_model.n_attr,
+                   cfg.language_model.n_attrs,
                    cfg.vision_model.image_dir,
                    cfg.vision_model.image_width,
                    cfg.vision_model.image_height,

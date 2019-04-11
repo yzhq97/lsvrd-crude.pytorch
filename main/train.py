@@ -52,6 +52,7 @@ def train_with_config(args, cfg):
     print("parsing dictionaries")
     word_dict = SymbolDictionary.load_from_file(cfg.word_dict)
     ent_dict = SymbolDictionary.load_from_file(cfg.ent_dict)
+    attr_dict = SymbolDictionary.load_from_file(cfg.attr_dict)
     pred_dict = SymbolDictionary.load_from_file(cfg.pred_dict)
 
     print("building model")
@@ -70,13 +71,13 @@ def train_with_config(args, cfg):
     print()
 
     print("loading train data...")
-    train_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict, cfg.train.triples_path,
+    train_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, attr_dict, pred_dict, cfg.train.triples_path,
                                          mode="train", preload=cfg.train.preload)
     train_loader = DataLoader(train_set, batch_size=cfg.train.batch_size,
                               shuffle=True, num_workers=args.n_workers)
 
     print("loading val data...")
-    val_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, pred_dict, cfg.val.triples_path,
+    val_set = GQATriplesDataset.create(cfg, word_dict, ent_dict, attr_dict, pred_dict, cfg.val.triples_path,
                                        mode="eval", preload=cfg.val.preload)
     val_loader = DataLoader(val_set, batch_size=cfg.val.batch_size,
                             shuffle=True, num_workers=args.n_workers)

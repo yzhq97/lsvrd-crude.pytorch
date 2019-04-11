@@ -60,7 +60,7 @@ class WriterThread(threading.Thread):
 
 if __name__ == "__main__":
 
-    config = "configs/resnet101-512-14-7-7-GRU-300d-1layer-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json"
+    config = "configs/vgg19-512-14-7-7-GRU-300d-1layer-5-0-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json"
     batch_size = 32
 
     cfg = edict(json.load(open(config)))

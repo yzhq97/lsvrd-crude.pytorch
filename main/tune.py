@@ -21,9 +21,9 @@ default_args = edict({
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--item', type=str, help="item to tune, e.g. 'learning_rate'")
-    parser.add_argument('--config', type=str, default='configs/vgg19-512-14-7-7-GRU-300d-1layer-256-128-0.4-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json')
+    parser.add_argument('--config', type=str, default='configs/resnet101-512-14-7-7-GRU-300d-1layer-5-0-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json')
     parser.add_argument('--gpus', type=str, help="comma separated gpu_ids to use, e.g. '2,5,6'")
-    parser.add_argument('--n_p', type=int, help="number of concurrent processes")
+    parser.add_argument('--np', type=int, help="number of concurrent processes")
     args = parser.parse_args()
     args.gpus = args.gpus.split(",")
     return args
@@ -38,6 +38,8 @@ def get_cfg_name(cfg):
     cfg_name += "-%s" % cfg.language_model.rnn_type
     cfg_name += "-%d" % cfg.language_model.word_emb_dim
     cfg_name += "-%dlayer" % cfg.language_model.n_layers
+    cfg_name += "-%d" % cfg.language_model.tokens_length
+    cfg_name += "-%d" % cfg.language_model.n_attrs
     cfg_name += "-%d" % cfg.train.batch_size
     cfg_name += "-%d" % cfg.ent_loss.n_neg
     cfg_name += "-%.1f" % cfg.ent_loss.margin
@@ -100,6 +102,17 @@ def tune_rnn_layers(base_cfg):
         cfgs.append(cfg_exp)
     args = edict(deepcopy(default_args))
     args.out_dir = "out/rnn_layers"
+    run_configs(args, cfgs)
+
+def tune_n_attrs(base_cfg):
+    values = [ 0, 1, 2, 3 ]
+    cfgs = []
+    for value in values:
+        cfg_exp = edict(deepcopy(base_cfg))
+        cfg_exp.language_model.n_attrs = value
+        cfgs.append(cfg_exp)
+    args = edict(deepcopy(default_args))
+    args.out_dir = "out/n_attrs"
     run_configs(args, cfgs)
 
 def tune_sampling(base_cfg):
@@ -248,6 +261,7 @@ tune_fns = {
     "crop_size": tune_crop_size,
     "rnn_type": tune_rnn_type,
     "rnn_layers": tune_rnn_layers,
+    "n_attrs": tune_n_attrs,
     "sampling": tune_sampling,
     "margin": tune_margin,
     "similarity_norm": tune_similarity_norm,
@@ -266,7 +280,7 @@ if __name__ == "__main__":
     print()
 
     available_gpus = run_args.gpus
-    n_concurrent = run_args.n_p
+    n_concurrent = run_args.np
     base_config_path = run_args.config
     tune_fn = tune_fns[run_args.item]
     base_cfg = edict(json.load(open(base_config_path)))

@@ -5,6 +5,7 @@ import h5py
 import random
 import pickle
 import numpy as np
+from copy import deepcopy
 from tqdm import tqdm, trange
 from lib.data.sym_dict import SymbolDictionary
 
@@ -53,19 +54,22 @@ def get_triples_from_gt(gt_boxes, ent_labels, ent_attrs, rel_mat, pred_use_prob,
     for i in range(n_ent):
         for j in range(n_ent):
             if i != j:
-                entry = {
+                entry_template = {
                     "sbj_box": gt_boxes[i],
                     "obj_box": gt_boxes[j],
                     "sbj_label": ent_labels[i],
                     "obj_label": ent_labels[j],
                     "sbj_attrs": ent_attrs[i],
-                    "obj_attrs": ent_attrs[j],
-                    "pred_label": 0
+                    "obj_attrs": ent_attrs[j]
                 }
                 if use_none_label and len(rel_mat[i][j]) == 0 and random.random() <= pred_use_prob[0]:
+                    entry = deepcopy(entry_template)
+                    entry["pred_label"] = 0
                     entries.append(entry)
                 for pred_id in rel_mat[i][j]:
                     if random.random() <= pred_use_prob[pred_id]:
+                        entry = deepcopy(entry_template)
+                        entry["pred_label"] = pred_id
                         entries.append(entry)
 
     return entries
@@ -91,7 +95,7 @@ def compute_iou(a, b):
     b_area = (x2b - x1b) * (y2b - y1b)
     union = a_area + b_area - intersection
 
-    return intersection / union
+    return intersection / (union + 1e-8)
 
 def compute_iou_mat(a, b):
 
@@ -117,29 +121,34 @@ def get_triples_from_proposals(proposals, gt_boxes, ent_labels, ent_attrs, rel_m
     max_iou = np.max(iou_mat, axis=1)
     argmax_iou = np.argmax(iou_mat, axis=1)
 
+    proposals = proposals.astype(np.int).tolist()
+
     for i in range(len(proposals)):
         i_gt = argmax_iou[i]
         sbj_label = ent_labels[i_gt] if max_iou[i] >= iou_thresh else 0
 
         for j in range(len(gt_boxes)):
             if i_gt != j:
-                entry = {
+                entry_template = {
                     "sbj_box": proposals[i],
                     "obj_box": gt_boxes[j],
                     "sbj_label": sbj_label,
                     "obj_label": ent_labels[j],
                     "sbj_attrs": ent_attrs[i_gt],
-                    "obj_attrs": ent_attrs[j],
-                    "pred_label": 0
+                    "obj_attrs": ent_attrs[j]
                 }
-                if use_none_label and (len(rel_mat[i_gt][j]) == 0 or sbj_label == 0):
-                    if sbj_label != 0 and random.random() > pred_use_prob[0]: continue
+                if use_none_label and sbj_label == 0:
+                    if random.random() > pred_use_prob[0]: continue
+                    entry = deepcopy(entry_template)
+                    entry["pred_label"] = 0
                     entries.append(entry)
                 for pred_id in rel_mat[i_gt][j]:
                     if random.random() > pred_use_prob[pred_id]: continue
+                    entry = deepcopy(entry_template)
+                    entry["pred_label"] = pred_id
                     entries.append(entry)
 
-        if sbj_label == 0:
+        if sbj_label == 0 and use_none_label:
             for j in range(len(proposals)):
                 if i != j and max_iou[j] < iou_thresh:
                     if random.random() > pred_use_prob[0]: continue
@@ -161,8 +170,8 @@ if __name__ == "__main__":
     print("generating triples ...")
 
     image_dir = "data/gqa/images"
-    box_source = "gt+proposals"
-    iou_thresh = 0.75
+    box_source = "gt"
+    iou_thresh = 0.5
     out_dir = "cache"
     n_preds = 311
     n_rel_max = 100000
@@ -208,6 +217,7 @@ if __name__ == "__main__":
 
             meta = gqa_objects_info[image_id]
             ent_labels, ent_attrs, ent_boxes, eid2idx, idx2eid = get_entities(scene_graph, ent_dict, attr_dict)
+            if len(ent_boxes) == 0: continue
             rel_mat = get_rel_mat(eid2idx, scene_graph, pred_dict)
 
             graph_entries = []
@@ -217,7 +227,7 @@ if __name__ == "__main__":
                 entry["image_id"] = image_id
                 entry["width"] = meta["width"]
                 entry["height"] = meta["height"]
-                graph_entries.append(gt_entries)
+                graph_entries.append(entry)
 
             if box_source == "gt+proposals":
                 n_proposal_boxes = meta["objectsNum"]
@@ -226,7 +236,11 @@ if __name__ == "__main__":
                 idx = meta["idx"]
                 proposals = h5_boxes[file_idx][idx, :n_proposal_boxes, :]
                 proposal_entries = get_triples_from_proposals(proposals, ent_boxes, ent_labels, ent_attrs, rel_mat, pred_use_prob, use_none_label, iou_thresh)
-                graph_entries.extend(proposal_entries)
+                for entry in proposal_entries:
+                    entry["image_id"] = image_id
+                    entry["width"] = meta["width"]
+                    entry["height"] = meta["height"]
+                    graph_entries.append(entry)
 
             entries.extend(graph_entries)
             triple_cnt[split] += len(graph_entries)
@@ -237,7 +251,7 @@ if __name__ == "__main__":
         if split == "train":
             out_name = split + "_triples"
             out_name = out_name + "_%s" % box_source
-            if box_source == "gt+proposals": out_name = out_name + "_%.f" % iou_thresh
+            if box_source == "gt+proposals": out_name = out_name + "_%.2f" % iou_thresh
             if use_none_label: out_name = out_name + "_use_none"
             out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
             out_name = out_name + ".pkl"
@@ -251,7 +265,7 @@ if __name__ == "__main__":
 
             out_name = "val_triples"
             out_name = out_name + "_%s" % box_source
-            if box_source == "gt+proposals": out_name = out_name + "_%.f" % iou_thresh
+            if box_source == "gt+proposals": out_name = out_name + "_%.2f" % iou_thresh
             if use_none_label: out_name = out_name + "_use_none"
             out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
             out_name = out_name + ".pkl"
@@ -261,7 +275,7 @@ if __name__ == "__main__":
 
             out_name = "test_triples"
             out_name = out_name + "_%s" % box_source
-            if box_source == "gt+proposals": out_name = out_name + "_%.f" % iou_thresh
+            if box_source == "gt+proposals": out_name = out_name + "_%.2f" % iou_thresh
             if use_none_label: out_name = out_name + "_use_none"
             out_name = out_name + "_%d_max_%d" % (n_preds, n_rel_max)
             out_name = out_name + ".pkl"
