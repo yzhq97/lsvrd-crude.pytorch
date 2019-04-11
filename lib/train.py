@@ -50,16 +50,16 @@ def train(word_emb, vision_model, language_model, ent_loss_model, rel_loss_model
 
             image_ids = data[0]
             if len(image_ids) < cfg.train.batch_size: continue
-            images = data[1].to(vision_model.device).float()
-            sbj_boxes = data[2].to(vision_model.device).float()
-            obj_boxes = data[3].to(vision_model.device).float()
-            rel_boxes = data[4].to(vision_model.device).float()
-            sbj_tokens = data[5].to(language_model.device)
-            obj_tokens = data[6].to(language_model.device)
-            rel_tokens = data[7].to(language_model.device)
-            sbj_seq_lens = data[8].to(language_model.device).long()
-            obj_seq_lens = data[9].to(language_model.device).long()
-            rel_seq_lens = data[10].to(language_model.device).long()
+            images = data[1].cuda().float()
+            sbj_boxes = data[2].cuda().float()
+            obj_boxes = data[3].cuda().float()
+            rel_boxes = data[4].cuda().float()
+            sbj_tokens = data[5].cuda()
+            obj_tokens = data[6].cuda()
+            rel_tokens = data[7].cuda()
+            sbj_seq_lens = data[8].cuda().long()
+            obj_seq_lens = data[9].cuda().long()
+            rel_seq_lens = data[10].cuda().long()
 
             tic_2 = time.time()
 

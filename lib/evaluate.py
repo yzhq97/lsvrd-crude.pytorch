@@ -65,13 +65,13 @@ def accuracy(vision_model, loader, ent_t_embs, pred_embs, tfb_logger, step, k_en
 
         print("evaluating batch %4d/%4d" % (i+1, n_batches), end="\r")
 
-        images = data[1].to(vision_model.device).float()
-        sbj_boxes = data[2].to(vision_model.device).float()
-        obj_boxes = data[3].to(vision_model.device).float()
-        rel_boxes = data[4].to(vision_model.device).float()
-        sbj_labels = data[5].to(vision_model.device)
-        obj_labels = data[6].to(vision_model.device)
-        rel_labels = data[7].to(vision_model.device)
+        images = data[1].cuda().float()
+        sbj_boxes = data[2].cuda().float()
+        obj_boxes = data[3].cuda().float()
+        rel_boxes = data[4].cuda().float()
+        sbj_labels = data[5].cuda()
+        obj_labels = data[6].cuda()
+        rel_labels = data[7].cuda()
 
         sbj_v_embs, obj_v_embs, rel_v_embs = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 
