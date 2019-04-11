@@ -225,7 +225,7 @@ if __name__ == "__main__":
                 file_idx = meta["file"]
                 idx = meta["idx"]
                 proposals = h5_boxes[file_idx][idx, :n_proposal_boxes, :]
-                proposal_entries = get_triples_from_proposals(proposals, ent_boxes, ent_attrs, ent_labels, rel_mat, pred_use_prob, use_none_label, iou_thresh)
+                proposal_entries = get_triples_from_proposals(proposals, ent_boxes, ent_labels, ent_attrs, rel_mat, pred_use_prob, use_none_label, iou_thresh)
                 graph_entries.extend(proposal_entries)
 
             entries.extend(graph_entries)
