@@ -23,8 +23,8 @@ def get_sym_emb(word_emb, language_model, word_dict, sym_dict, tokens_length, ba
     sym_embs = []
 
     for batch in range(n_batches):
-        batch_tokens = sym_tokens[batch * batch_size: (batch + 1) * batch_size].to(language_model.device)
-        batch_seq_lens = seq_lens[batch * batch_size: (batch + 1) * batch_size].to(language_model.device)
+        batch_tokens = sym_tokens[batch * batch_size: (batch + 1) * batch_size].cuda()
+        batch_seq_lens = seq_lens[batch * batch_size: (batch + 1) * batch_size].cuda()
         batch_w_embs = word_emb(batch_tokens)
         batch_embs = language_model(batch_w_embs, batch_seq_lens)
         sym_embs.append(batch_embs)
