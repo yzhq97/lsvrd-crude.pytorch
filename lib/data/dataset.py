@@ -171,7 +171,7 @@ class GQATriplesDataset(Dataset):
 
         for entry in tqdm(entries):
 
-            entry = edict()
+            entry = edict(entry)
 
             # tokenize text
             if self.mode == self.train:
