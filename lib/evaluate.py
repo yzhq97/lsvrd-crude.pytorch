@@ -23,8 +23,8 @@ def get_sym_emb(word_emb, language_model, word_dict, sym_dict, tokens_length, ba
     sym_embs = []
 
     for batch in range(n_batches):
-        batch_tokens = sym_tokens[batch * batch_size: (batch + 1) * batch_size].cuda()
-        batch_seq_lens = seq_lens[batch * batch_size: (batch + 1) * batch_size].cuda()
+        batch_tokens = sym_tokens[batch * batch_size: (batch + 1) * batch_size].to(language_model.device)
+        batch_seq_lens = seq_lens[batch * batch_size: (batch + 1) * batch_size].to(language_model.device)
         batch_w_embs = word_emb(batch_tokens)
         batch_embs = language_model(batch_w_embs, batch_seq_lens)
         sym_embs.append(batch_embs)
@@ -65,13 +65,13 @@ def accuracy(vision_model, loader, ent_t_embs, pred_embs, tfb_logger, step, k_en
 
         print("evaluating batch %4d/%4d" % (i+1, n_batches), end="\r")
 
-        images = data[1].float().cuda()
-        sbj_boxes = data[2].float().cuda()
-        obj_boxes = data[3].float().cuda()
-        rel_boxes = data[4].float().cuda()
-        sbj_labels = data[5].cuda()
-        obj_labels = data[6].cuda()
-        rel_labels = data[7].cuda()
+        images = data[1].to(vision_model.device).float()
+        sbj_boxes = data[2].to(vision_model.device).float()
+        obj_boxes = data[3].to(vision_model.device).float()
+        rel_boxes = data[4].to(vision_model.device).float()
+        sbj_labels = data[5].to(vision_model.device)
+        obj_labels = data[6].to(vision_model.device)
+        rel_labels = data[7].to(vision_model.device)
 
         sbj_v_embs, obj_v_embs, rel_v_embs = vision_model(images, sbj_boxes, obj_boxes, rel_boxes)
 

@@ -15,7 +15,7 @@
     "feature_dim": 512,
     "pre_extract": true,
     "image_dir": "data/gqa/images",
-    "cache_dir": "cache/gqa_vgg19_14x14",
+    "cache_dir": "cache/gqa/vgg19_14x14",
     "emb_dim": 512,
     "hid_dim": 256,
     "ent_crop_size": 7,
