@@ -245,9 +245,6 @@ if __name__ == "__main__":
             entries.extend(graph_entries)
             triple_cnt[split] += len(graph_entries)
 
-        # with open(os.path.join(out_dir, "%s_%s_triples.json" % (split, box_source)), "w") as f:
-        #     json.dump(entries, f)
-
         if split == "train":
             out_name = split + "_triples"
             out_name = out_name + "_%s" % box_source
