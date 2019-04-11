@@ -172,18 +172,19 @@ class GQATriplesDataset(Dataset):
         for entry in tqdm(entries):
 
             entry = edict(entry)
-            print(entry)
 
             # tokenize text
             if self.mode == self.train:
                 sbj_text = self.ent_dict.idx2sym[entry.sbj_label]
                 for i in range(min(self.n_attrs, len(entry.sbj_attrs))):
-                    sbj_text = self.attr_dict.idx2sym[entry.sbj_attrs[i]] + " " + sbj_text
+                    attr = entry.sbj_attrs[i]
+                    sbj_text = self.attr_dict.idx2sym[attr] + " " + sbj_text
                 entry.sbj_tokens, entry.sbj_seq_len = self.tokenize(sbj_text, keep_tail=True)
 
                 obj_text = self.ent_dict.idx2sym[entry.obj_label]
                 for i in range(min(self.n_attrs, len(entry.obj_attrs))):
-                    obj_text = self.attr_dict.idx2sym[entry.obj_attrs[i]] + " " + obj_text
+                    attr = entry.obj_attrs[i]
+                    obj_text = self.attr_dict.idx2sym[attr] + " " + obj_text
                 entry.obj_tokens, entry.obj_seq_len = self.tokenize(obj_text, keep_tail=True)
 
                 pred_text = self.pred_dict.idx2sym[entry.pred_label]
