@@ -7,6 +7,7 @@ import math
 import torch
 import pickle
 import numpy as np
+from copy import deepcopy
 from tqdm import tqdm, trange
 from easydict import EasyDict as edict
 from torch.utils.data import Dataset
@@ -170,7 +171,7 @@ class GQATriplesDataset(Dataset):
 
         for entry in tqdm(entries):
 
-            entry = edict(entry)
+            entry = edict(deepcopy(entry))
 
             # tokenize text
             if self.mode == self.train:
