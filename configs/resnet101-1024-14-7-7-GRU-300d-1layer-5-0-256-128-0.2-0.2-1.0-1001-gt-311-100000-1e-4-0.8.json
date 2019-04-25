@@ -1,0 +1,67 @@
+{
+  "dataset": "gqa",
+  "word_dict": "cache/word_dict.json",
+  "ent_dict": "cache/ent_dict.json",
+  "attr_dict": "cache/attr_dict.json",
+  "pred_dict": "cache/pred_dict_311.json",
+  "n_preds": 311,
+  "n_rel_max": 100000,
+  "vision_model": {
+    "image_height": 448,
+    "image_width":448,
+    "backbone": "resnet101",
+    "feature_height": 14,
+    "feature_width": 14,
+    "feature_dim": 2048,
+    "pre_extract": true,
+    "image_dir": "data/gqa/images",
+    "cache_dir": "cache/gqa/resnet101_14x14",
+    "emb_dim": 1024,
+    "hid_dim": 1024,
+    "ent_crop_size": 7,
+    "rel_crop_size": 7
+  },
+  "language_model": {
+    "rnn_type": "GRU",
+    "bidirectional": false,
+    "tokens_length": 5,
+    "word_emb_dim": 300,
+    "emb_dim": 1024,
+    "n_layers": 1,
+    "n_attrs": 0,
+    "dropout": 0.0,
+    "word_emb_init": "cache/word_emb_init_300d.npy"
+  },
+  "ent_loss": {
+    "similarity_norm": 1.0,
+    "margin": 0.2,
+    "n_neg": 128,
+    "x_tr": true,
+    "x_trsm": false,
+    "y_tr": false,
+    "y_trsm": true
+  },
+  "rel_loss": {
+    "similarity_norm": 1.0,
+    "margin": 0.2,
+    "n_neg": 128,
+    "x_tr": true,
+    "x_trsm": false,
+    "y_tr": false,
+    "y_trsm": true
+  },
+  "train": {
+    "learning_rate": 0.0001,
+    "learning_rate_decay": 0.8,
+    "weight_decay": 0.0001,
+    "batch_size": 256,
+    "triples_path": "cache/train_triples_gt_use_none_311_max_100000.pkl",
+    "box_source": "gt",
+    "n_preds": 311
+  },
+  "val": {
+    "batch_size": 256,
+    "triples_path": "cache/val_triples_gt_use_none_311_max_100000.pkl",
+    "box_source": "gt"
+  }
+}
