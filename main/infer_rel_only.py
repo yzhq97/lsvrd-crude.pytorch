@@ -9,7 +9,7 @@ import numpy as np
 from tqdm import tqdm
 from easydict import EasyDict as edict
 from lib.data.sym_dict import SymbolDictionary
-from lib.infer import infer
+from lib.infer import infer_rel_only
 from lib.evaluate import get_sym_emb
 from lib.utils import count_parameters
 from lib.model.vision_model import VisionModel
@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--gpu_id', type=int, default=0)
     parser.add_argument('--n_obj', type=int, default=36)
-    parser.add_argument('--gqa_objects_dir', type=str, default='data/gqa/objects')
+    parser.add_argument('--objects_dir', type=str)
     parser.add_argument('--out_dir', type=str, default='data/gqa')
     args = parser.parse_args()
     _, cfg_name = os.path.split(args.config)
@@ -78,50 +78,28 @@ def infer_with_cfg(args, cfg):
     n_v_params = count_parameters(vision_model)
     print("vision model: {:,} parameters".format(n_v_params))
 
-    print("getting boxes from gqa_objects_dir")
-    info_path = os.path.join(args.gqa_objects_dir, "gqa_objects_info.json")
+    # load objects h5
+    info_path = os.path.join(args.objects_dir, "info.json")
     info = json.load(open(info_path))
-    h5_paths = [ os.path.join(args.gqa_objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]
-    h5s = [ h5py.File(h5_path) for h5_path in h5_paths ]
-    h5_boxes = [ h5["bboxes"] for h5 in h5s ]
-    h5_features = [ h5["features"] for h5 in h5s]
-    all_boxes = {}
-    rearange_inds = np.argsort([ 1, 0, 3, 2 ]) # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
-    for image_id, meta in tqdm(info.items()):
-        file_idx = meta["file"]
-        idx = meta["idx"]
-        n_use = min(meta["objectsNum"], args.n_obj)
-        width = float(meta["width"])
-        height = float(meta["height"])
-        boxes = h5_boxes[file_idx][idx, :n_use, :]
-        boxes = boxes[:, rearange_inds] # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
-        boxes = boxes / np.array([height, width, height, width])
-        all_boxes[image_id] = boxes
-    n_entries = len(all_boxes)
+    h5_names = [ name for name in os.listdir(args.objects_dir) if name.endswith('.h5') ]
+    h5_names = sorted(h5_names)
+    h5_paths = [ os.path.join(args.objects_dir, name) for name in h5_names ]
+    h5s = [ h5py.File(path, "r+") for path in h5_paths ]
 
+    # load pre extracted features
     print("creating h5 loader")
     fields = [{ "name": "features",
                 "shape": [cfg.vision_model.feature_dim, cfg.vision_model.feature_height, cfg.vision_model.feature_width],
                 "dtype": "float32",
                 "preload": False }]
-    image_ids = [image_id for image_id in all_boxes.keys()]
+    image_ids = [image_id for image_id in info["indices"].keys()]
     image_ids = list(set(image_ids))
     loader = H5DataLoader.load_from_directory(cfg.vision_model.cache_dir, fields, image_ids)
 
-    print("creating h5 writer")
-    max_ent = args.n_obj
-    emb_dim = cfg.vision_model.emb_dim
-    fields = [
-        { "name": "frcnn_entities", "shape": [max_ent, 2048], "dtype": "float32"},
-        # { "name": "entities", "shape": [ max_ent, emb_dim ], "dtype": "float32" },
-        { "name": "relations", "shape": [ max_ent, max_ent, emb_dim ], "dtype": "float32" },
-        { "name": "rel_mat", "shape": [ max_ent, max_ent ], "dtype": "int32" }
-    ]
-    writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
-
     print("inference started")
-    infer(vision_model, all_boxes, pred_emb, loader, writer, h5_features, info, args, cfg)
-    writer.close()
+    infer_rel_only(vision_model, pred_emb, loader, h5s, info, args, cfg)
+
+    for h5 in h5s: h5.close()
 
 if __name__ == "__main__":
     args = parse_args()
