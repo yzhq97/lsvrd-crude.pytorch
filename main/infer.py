@@ -109,13 +109,13 @@ def infer_with_cfg(args, cfg):
     loader = H5DataLoader.load_from_directory(cfg.vision_model.cache_dir, fields, image_ids)
 
     print("creating h5 writer")
-    max_ent = args.n_obj
+    n_obj = args.n_obj
     emb_dim = cfg.vision_model.emb_dim
     fields = [
-        { "name": "objects", "shape": [max_ent, 2048], "dtype": "float32"},
-        # { "name": "entities", "shape": [ max_ent, emb_dim ], "dtype": "float32" },
-        { "name": "relations", "shape": [ max_ent, max_ent, emb_dim ], "dtype": "float32" },
-        { "name": "rel_mat", "shape": [ max_ent, max_ent ], "dtype": "int32" }
+        { "name": "objects", "shape": [n_obj, 2048], "dtype": "float32"},
+        # { "name": "entities", "shape": [ n_obj, emb_dim ], "dtype": "float32" },
+        { "name": "relations", "shape": [ n_obj, n_obj, emb_dim ], "dtype": "float32" },
+        { "name": "rel_mat", "shape": [ n_obj, n_obj ], "dtype": "int32" }
     ]
     writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
 
