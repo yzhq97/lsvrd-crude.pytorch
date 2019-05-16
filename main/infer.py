@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--gpu_id', type=int, default=0)
     parser.add_argument('--n_obj', type=int, default=36)
     parser.add_argument('--gqa_objects_dir', type=str, default='data/gqa/objects')
-    parser.add_argument('--out_dir', type=str, default='data/gqa')
+    parser.add_argument('--out_dir', type=str, default='data/gqa/lsvrd_features')
     args = parser.parse_args()
     _, cfg_name = os.path.split(args.config)
     cfg_name, _ = os.path.splitext(cfg_name)
@@ -112,7 +112,7 @@ def infer_with_cfg(args, cfg):
     max_ent = args.n_obj
     emb_dim = cfg.vision_model.emb_dim
     fields = [
-        { "name": "frcnn_entities", "shape": [max_ent, 2048], "dtype": "float32"},
+        { "name": "objects", "shape": [max_ent, 2048], "dtype": "float32"},
         # { "name": "entities", "shape": [ max_ent, emb_dim ], "dtype": "float32" },
         { "name": "relations", "shape": [ max_ent, max_ent, emb_dim ], "dtype": "float32" },
         { "name": "rel_mat", "shape": [ max_ent, max_ent ], "dtype": "int32" }
