@@ -65,7 +65,7 @@ def parse_args():
                         default='resnet101-512-14-7-7-GRU-300d-1layer-5-0-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json')
     parser.add_argument('--in_dir', type=str, default='data/gqa/images')
     parser.add_argument('--out_dir', type=str, default='cache/gqa/resnet101_14x14')
-    parser.add_argument('--args.batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=32)
     args = parser.parse_args()
 
     return args
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         "dtype": "float32"
     }]
 
-    os.makedirs(vcfg.cache_dir, exist_ok=True)
+    os.makedirs(args.out_dir, exist_ok=True)
     h5_writer = H5DataWriter(args.out_dir, cfg.dataset, len(files), 16, fields)
 
     print("building %s ..." % vcfg.backbone)
