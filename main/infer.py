@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--n_obj', type=int, default=36)
     parser.add_argument('--dataset', type=str, default='gqa')
     parser.add_argument('--objects_dir', type=str, default='data/gqa/objects')
-    parser.add_argument('--images_dir', type=str, default='data/gqa/images')
+    parser.add_argument('--cache_dir', type=str, default='cache/gqa/resnet101_14x14')
     parser.add_argument('--out_dir', type=str, default='data/gqa/lsvrd_features')
     args = parser.parse_args()
 
@@ -111,6 +111,7 @@ def infer_with_cfg(args, cfg):
         info_path = os.path.join(args.objects_dir, "info.json")
         info = json.load(open(info_path))
         indices = info['indices']
+        meta = info['meta']
         h5_paths = [os.path.join(args.objects_dir, "data_%d.h5" % i) for i in range(16)]
         h5s = [h5py.File(h5_path) for h5_path in h5_paths]
         h5_boxes = [h5["boxes"] for h5 in h5s]
@@ -120,10 +121,7 @@ def infer_with_cfg(args, cfg):
         for image_id, idx_pair in tqdm(indices.items()):
             block_idx = idx_pair["block"]
             idx = idx_pair["idx"]
-            image_path = os.path.join(args.images_dir, "%s.jpg" % image_id)
-            image = cv2.imread(image_path)
-            height, width, _ = image.shape
-            height, width = float(height), float(width)
+            height, width = meta[image_id]['height'], meta[image_id]['width']
             boxes = h5_boxes[block_idx][idx]
             keep = np.where(np.sum(boxes, axis=1) > 0)
             boxes = boxes[keep]
@@ -139,7 +137,7 @@ def infer_with_cfg(args, cfg):
                 "preload": False }]
     image_ids = [image_id for image_id in all_boxes.keys()]
     image_ids = list(set(image_ids))
-    loader = H5DataLoader.load_from_directory(cfg.vision_model.cache_dir, fields, image_ids)
+    loader = H5DataLoader.load_from_directory(args.cache_dir, fields, image_ids)
 
     print("creating h5 writer")
     n_obj = args.n_obj

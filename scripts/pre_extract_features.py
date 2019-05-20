@@ -43,7 +43,7 @@ class LoaderThread(threading.Thread):
         self.width = width
         self.output = output
     def run(self):
-        images = [load_image(vcfg.image_dir, file) for file in self.files]
+        images = [load_image(args.in_dir, file) for file in self.files]
         images = [preprocess_image(image, vcfg.image_height, vcfg.image_width) for image in images]
         images = [np.expand_dims(image, axis=0) for image in images]
         self.output.extend(images)
