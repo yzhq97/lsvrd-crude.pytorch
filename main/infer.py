@@ -4,6 +4,7 @@ import argparse
 import json
 import h5py
 import math
+import cv2
 import torch
 import numpy as np
 from tqdm import tqdm
@@ -24,12 +25,18 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--gpu_id', type=int, default=0)
     parser.add_argument('--n_obj', type=int, default=36)
-    parser.add_argument('--gqa_objects_dir', type=str, default='data/gqa/objects')
+    parser.add_argument('--dataset', type=str, default='gqa')
+    parser.add_argument('--objects_dir', type=str, default='data/gqa/objects')
+    parser.add_argument('--images_dir', type=str, default='data/gqa/images')
     parser.add_argument('--out_dir', type=str, default='data/gqa/lsvrd_features')
     args = parser.parse_args()
+
     _, cfg_name = os.path.split(args.config)
     cfg_name, _ = os.path.splitext(cfg_name)
     args.cfg_name = cfg_name
+
+    assert args.dataset in ["gqa", "vqa2"]
+
     return args
 
 def infer_with_cfg(args, cfg):
@@ -78,28 +85,54 @@ def infer_with_cfg(args, cfg):
     n_v_params = count_parameters(vision_model)
     print("vision model: {:,} parameters".format(n_v_params))
 
-    print("getting boxes from gqa_objects_dir")
-    info_path = os.path.join(args.gqa_objects_dir, "gqa_objects_info.json")
-    info = json.load(open(info_path))
-    h5_paths = [ os.path.join(args.gqa_objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]
-    h5s = [ h5py.File(h5_path) for h5_path in h5_paths ]
-    h5_boxes = [ h5["bboxes"] for h5 in h5s ]
-    h5_features = [ h5["features"] for h5 in h5s]
-    all_boxes = {}
-    rearange_inds = np.argsort([ 1, 0, 3, 2 ]) # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
-    for image_id, meta in tqdm(info.items()):
-        file_idx = meta["file"]
-        idx = meta["idx"]
-        n_use = min(meta["objectsNum"], args.n_obj)
-        width = float(meta["width"])
-        height = float(meta["height"])
-        boxes = h5_boxes[file_idx][idx, :n_use, :]
-        boxes = boxes[:, rearange_inds] # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
-        boxes = boxes / np.array([height, width, height, width])
-        all_boxes[image_id] = boxes
-    n_entries = len(all_boxes)
+    print("getting boxes from objects_dir")
 
-    print("creating h5 loader")
+    if args.dataset == "gqa":
+        info_path = os.path.join(args.objects_dir, "gqa_objects_info.json")
+        info = json.load(open(info_path))
+        h5_paths = [ os.path.join(args.objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]
+        h5s = [ h5py.File(h5_path) for h5_path in h5_paths ]
+        h5_boxes = [ h5["bboxes"] for h5 in h5s ]
+        h5_features = [ h5["features"] for h5 in h5s]
+        all_boxes = {}
+        rearange_inds = np.argsort([ 1, 0, 3, 2 ]) # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
+        for image_id, meta in tqdm(info.items()):
+            file_idx = meta["file"]
+            idx = meta["idx"]
+            n_use = min(meta["objectsNum"], args.n_obj)
+            width = float(meta["width"])
+            height = float(meta["height"])
+            boxes = h5_boxes[file_idx][idx, :n_use, :]
+            boxes = boxes[:, rearange_inds] # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
+            boxes = boxes / np.array([height, width, height, width])
+            all_boxes[image_id] = boxes
+        n_entries = len(all_boxes)
+    elif args.dataset == "vqa2":
+        info_path = os.path.join(args.objects_dir, "info.json")
+        info = json.load(open(info_path))
+        indices = info['indices']
+        h5_paths = [os.path.join(args.objects_dir, "data_%d.h5" % i) for i in range(16)]
+        h5s = [h5py.File(h5_path) for h5_path in h5_paths]
+        h5_boxes = [h5["boxes"] for h5 in h5s]
+        h5_features = [h5["v_objs"] for h5 in h5s]
+        all_boxes = {}
+        rearange_inds = np.argsort([1, 0, 3, 2])  # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
+        for image_id, idx_pair in tqdm(indices.items()):
+            block_idx = idx_pair["block"]
+            idx = idx_pair["idx"]
+            image_path = os.path.join(args.images_dir, "%s.jpg" % image_id)
+            image = cv2.imread(image_path)
+            height, width, _ = image.shape
+            height, width = float(height), float(width)
+            boxes = h5_boxes[block_idx][idx]
+            keep = np.where(np.sum(boxes, axis=1) > 0)
+            boxes = boxes[keep]
+            boxes = boxes[:, rearange_inds]  # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
+            boxes = boxes / np.array([height, width, height, width])
+            all_boxes[image_id] = boxes
+        n_entries = len(all_boxes)
+
+    print("creating h5 loader for pre-extracted feature")
     fields = [{ "name": "features",
                 "shape": [cfg.vision_model.feature_dim, cfg.vision_model.feature_height, cfg.vision_model.feature_width],
                 "dtype": "float32",

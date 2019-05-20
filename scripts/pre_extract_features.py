@@ -5,6 +5,7 @@ import json
 import math
 import torch
 import threading
+import argparse
 import numpy as np
 from tqdm import tqdm
 from easydict import EasyDict as edict
@@ -58,15 +59,25 @@ class WriterThread(threading.Thread):
             image_id, _ = os.path.splitext(file)
             self.h5_writer.put(image_id, self.features[i])
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, help='model configs',
+                        default='resnet101-512-14-7-7-GRU-300d-1layer-5-0-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json')
+    parser.add_argument('--in_dir', type=str, default='data/gqa/images')
+    parser.add_argument('--out_dir', type=str, default='cache/gqa/resnet101_14x14')
+    parser.add_argument('--args.batch_size', type=int, default=32)
+    args = parser.parse_args()
+
+    return args
+
 if __name__ == "__main__":
 
-    config = "configs/vgg19-512-14-7-7-GRU-300d-1layer-5-0-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json"
-    batch_size = 32
+    args = parse_args()
 
-    cfg = edict(json.load(open(config)))
+    cfg = edict(json.load(open(args.config)))
     vcfg = cfg.vision_model
 
-    files = os.listdir(vcfg.image_dir)
+    files = os.listdir(args.in_dir)
     files = [file for file in files if file.endswith(".jpg")]
 
     fields = [{
@@ -76,7 +87,7 @@ if __name__ == "__main__":
     }]
 
     os.makedirs(vcfg.cache_dir, exist_ok=True)
-    h5_writer = H5DataWriter(vcfg.cache_dir, cfg.dataset, len(files), 16, fields)
+    h5_writer = H5DataWriter(args.out_dir, cfg.dataset, len(files), 16, fields)
 
     print("building %s ..." % vcfg.backbone)
     backbone_cls = backbones[vcfg.backbone]
@@ -85,11 +96,11 @@ if __name__ == "__main__":
     cnn.cuda()
 
     print("pre-extracting features with %s ..." % vcfg.backbone)
-    n_batches = int(math.ceil(len(files)/batch_size))
-    pbar = tqdm(total=n_batches*batch_size)
+    n_batches = int(math.ceil(len(files)/args.batch_size))
+    pbar = tqdm(total=n_batches*args.batch_size)
 
     batch_images = []
-    loader = LoaderThread(files[:batch_size], vcfg.image_height, vcfg.image_width, batch_images)
+    loader = LoaderThread(files[:args.batch_size], vcfg.image_height, vcfg.image_width, batch_images)
     loader.start()
 
     writer = None
@@ -100,7 +111,7 @@ if __name__ == "__main__":
         images = np.concatenate(batch_images, axis=0)
         if b + 1 < n_batches:
             batch_images = []
-            loader = LoaderThread(files[(b+1)*batch_size: (b+2)*batch_size],
+            loader = LoaderThread(files[(b+1)*args.batch_size: (b+2)*args.batch_size],
                                   vcfg.image_height, vcfg.image_width, batch_images)
             loader.start()
 
@@ -108,10 +119,10 @@ if __name__ == "__main__":
         features = cnn(images).data.cpu().numpy()
 
         if writer is not None: writer.join()
-        writer = WriterThread(h5_writer, features, files[b*batch_size: (b+1)*batch_size])
+        writer = WriterThread(h5_writer, features, files[b*args.batch_size: (b+1)*args.batch_size])
         writer.start()
 
-        pbar.update(batch_size)
+        pbar.update(args.batch_size)
 
     pbar.close()
     writer.join()
