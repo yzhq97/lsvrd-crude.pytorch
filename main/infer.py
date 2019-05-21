@@ -129,6 +129,9 @@ def infer_with_cfg(args, cfg):
             boxes = boxes / np.array([height, width, height, width])
             all_boxes[image_id] = boxes
         n_entries = len(all_boxes)
+        info = indices
+    else:
+        raise NotImplementedError
 
     print("creating h5 loader for pre-extracted feature")
     fields = [{ "name": "features",
