@@ -33,24 +33,23 @@ class LoaderThread(Thread):
         self.output.append(self.loader[self.image_id])
 
 class WriterThread(Thread):
-    def __init__(self, writer, image_id, h5s, info, max_ent, rel_emb, rel_mat):
+    def __init__(self, writer, image_id, h5s, indices, max_ent, rel_emb, rel_mat):
         super(WriterThread, self).__init__()
         self.writer = writer
         self.image_id = image_id
         self.h5s = h5s
-        self.info = info[image_id]
+        self.indices = indices[image_id]
         self.max_ent = max_ent
         self.rel_emb = rel_emb
         self.rel_mat = rel_mat
     def run(self):
-        file_idx = self.info["file"]
-        array_idx = self.info["idx"]
+        file_idx, array_idx = self.indices
         data = [
             self.h5s[file_idx][array_idx, :self.max_ent, :],
             self.rel_emb, self.rel_mat]
         self.writer.put(self.image_id, data)
 
-def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args, cfg):
+def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, indices, args, cfg):
 
     tasks = list(all_ent_boxes.items())
     n_tasks = len(tasks)
@@ -108,7 +107,7 @@ def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, info, args
             rel_emb_out[:n_ent, :n_ent, :] = rel_emb
 
             if writer_thread is not None: writer_thread.join()
-            writer_thread = WriterThread(writer, image_id, h5s, info, args.n_obj, rel_emb_out, rel_mat_out)
+            writer_thread = WriterThread(writer, image_id, h5s, indices, args.n_obj, rel_emb_out, rel_mat_out)
             writer_thread.start()
 
 def infer_rel_only(vision_model, pred_emb, loader, h5s, info, args, cfg):

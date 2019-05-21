@@ -89,14 +89,14 @@ def infer_with_cfg(args, cfg):
 
     if args.dataset == "gqa":
         info_path = os.path.join(args.objects_dir, "gqa_objects_info.json")
-        info = json.load(open(info_path))
+        indices = json.load(open(info_path))
         h5_paths = [ os.path.join(args.objects_dir, "gqa_objects_%d.h5" % i) for i in range(16) ]
         h5s = [ h5py.File(h5_path) for h5_path in h5_paths ]
         h5_boxes = [ h5["bboxes"] for h5 in h5s ]
         h5_features = [ h5["features"] for h5 in h5s]
         all_boxes = {}
         rearange_inds = np.argsort([ 1, 0, 3, 2 ]) # (x1, y1, x2, y2) -> (y1, x1, y2, x2)
-        for image_id, meta in tqdm(info.items()):
+        for image_id, meta in tqdm(indices.items()):
             file_idx = meta["file"]
             idx = meta["idx"]
             n_use = min(meta["objectsNum"], args.n_obj)
@@ -107,6 +107,7 @@ def infer_with_cfg(args, cfg):
             boxes = boxes / np.array([height, width, height, width])
             all_boxes[image_id] = boxes
         n_entries = len(all_boxes)
+        indices = { key: (val["file"], val["idx"]) for key, val in indices.items() }
     elif args.dataset == "vqa2":
         info_path = os.path.join(args.objects_dir, "info.json")
         info = json.load(open(info_path))
@@ -129,7 +130,7 @@ def infer_with_cfg(args, cfg):
             boxes = boxes / np.array([height, width, height, width])
             all_boxes[image_id] = boxes
         n_entries = len(all_boxes)
-        info = indices
+        indices = {key: (val["block"], val["idx"]) for key, val in indices.items()}
     else:
         raise NotImplementedError
 
@@ -154,7 +155,7 @@ def infer_with_cfg(args, cfg):
     writer = H5DataWriter(out_dir, "gqa_lsvrd_features", n_entries, 16, fields)
 
     print("inference started")
-    infer(vision_model, all_boxes, pred_emb, loader, writer, h5_features, info, args, cfg)
+    infer(vision_model, all_boxes, pred_emb, loader, writer, h5_features, indices, args, cfg)
     writer.close()
 
 if __name__ == "__main__":
