@@ -148,6 +148,7 @@ def infer_with_cfg(args, cfg):
     emb_dim = cfg.vision_model.emb_dim
     fields = [
         { "name": "objects", "shape": [n_obj, 2048], "dtype": "float32"},
+        { "name": "boxes", "shape": [n_obj, 4], "dtype": "float32" },
         # { "name": "entities", "shape": [ n_obj, emb_dim ], "dtype": "float32" },
         { "name": "relations", "shape": [ n_obj, n_obj, emb_dim ], "dtype": "float32" },
         { "name": "rel_mat", "shape": [ n_obj, n_obj ], "dtype": "int32" }
