@@ -1,4 +1,4 @@
-# Large-Scale Visual Relationship Understanding - PyTorch Implementation
+# Visual Relationship Encoder - PyTorch Implementation
 
 ## Environment
 
@@ -33,18 +33,17 @@ make a soft link under `data/`
 
 make sure you have:
 ```
-cd $LSVRD_ROOT
+cd $VRE_ROOT
 tree data/gqa -L 1
 data/gqa
-├── images
-├── objects
-├── questions
-└── scene_graphs
+├── images - all the image files extracted in this folder
+├── objects - object features (.h5 files and the .json)
+├── questions12 - v1.2 question json files
+└── scene_graphs - scene graph json files
 tree data/glove -L 1
 data/glove
 └── glove.6B.300d.txt
-
-``` 
+```
 
 preprocess data:
 ```
@@ -98,6 +97,28 @@ $LSVRD_ROOT
 └── scripts
 ```
 
+### Training
 
+You can optionally use `scripts/pre_extract_features.py` to extract ResNet-101 feature maps as 
+preprocessing.
 
+example:
+```
+python main/train.py \
+--config configs/resnet101-512-14-7-7-GRU-300d-1layer-5-0-256-128-0.2-0.2-1.0-1001-gt-311-100000-1e-4-0.8.json \
+--n_epochs 5 \
+```
 
+run `python main/train.py --help` for other options.
+
+### Inference
+
+To extract features on GQA, use `main/infer.py`
+example:
+```
+python main/train.py \
+--config configs/
+--lckpt path/to/language/model.pth
+--vckpt path/to/vision/model.pth
+--dataset gqa
+```
