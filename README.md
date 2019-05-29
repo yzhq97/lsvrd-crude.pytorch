@@ -51,18 +51,6 @@ cd $LSVRD_ROOT
 sh scripts/prepare_data.sh
 ```
 
-## Training
-Specify configuration file 
-```
-cd $LSVRD_ROOT
-python main/train.py --config configs/lsvrd-res101-512.json
-```
-To see all the args
-```
-cd $LSVRD_ROOT
-python main/train.py --help
-```
-
 ## Structure
 ```
 $LSVRD_ROOT
