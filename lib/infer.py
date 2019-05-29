@@ -110,8 +110,11 @@ def infer(vision_model, all_ent_boxes, pred_emb, loader, writer, h5s, indices, a
             rel_emb_out = np.zeros([args.n_obj, args.n_obj, cfg.vision_model.emb_dim])
             rel_emb_out[:n_ent, :n_ent, :] = rel_emb
 
+            out_boxes = np.zeros([args.n_obj, 4])
+            out_boxes[:n_ent] = ent_boxes
+
             if writer_thread is not None: writer_thread.join()
-            writer_thread = WriterThread(writer, image_id, ent_boxes, h5s, indices, args.n_obj, rel_emb_out, rel_mat_out)
+            writer_thread = WriterThread(writer, image_id, out_boxes, h5s, indices, args.n_obj, rel_emb_out, rel_mat_out)
             writer_thread.start()
 
 def infer_rel_only(vision_model, pred_emb, loader, h5s, info, args, cfg):
